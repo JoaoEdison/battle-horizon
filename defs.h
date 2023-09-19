@@ -1,1 +1,4 @@
 #define MAX_DIST 120.0f
+#define ARRIVAL_DIST (MAX_DIST*10)
+#define SPACECRAFT_SPEED .2f
+#define SPACECRAFT_SPEED_MAX .5f

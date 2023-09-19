@@ -29,21 +29,17 @@ struct models_with_collisions {
 					) \
 				);
 
-void draw_collisions_wires(current_model, models)
+void draw_collisions_wires(current_model, collisions)
 struct model *current_model;
-struct models_with_collisions models[];
+struct list *collisions;
 {
-	struct list *collisions;
 	struct node *next;
 	struct model *ptrm;
-	float new_scale;
 	Vector3 temp;
 
-	collisions = &models[current_model->model].collision_list;
 	for (next = collisions->first; next; next = next->next) {
 		ptrm = (struct model*)next->data;
 		temp = TRANFORM_SPHERE(current_model)
-		new_scale = ptrm->scale * current_model->scale;
-		DrawSphereWires(temp, new_scale, 5, 5, GREEN);
+		DrawSphereWires(temp, ptrm->scale * current_model->scale, 5, 5, GREEN);
 	}
 }

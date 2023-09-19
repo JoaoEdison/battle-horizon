@@ -280,16 +280,16 @@ main()
 				for (next = drawing.first; next; next = next->next) {
 					draw_model = (struct model*)next->data;
 					DrawModelRotate(models[draw_model->model].drawing, draw_model->position, draw_model->angles, draw_model->scale, selected == next? PURPLE : GRAY);
-					draw_collisions_wires(draw_model, models);
+					draw_collisions_wires(draw_model, &models[draw_model->model].collision_list);
 				}
 				for (next = selection.first; next; next = next->next) {
 					draw_model = (struct model*)next->data;
 					DrawModelRotate(models[draw_model->model].drawing, draw_model->position, draw_model->angles, draw_model->scale, RED);
-					draw_collisions_wires(draw_model, models);
+					draw_collisions_wires(draw_model, &models[draw_model->model].collision_list);
 				}
 				DrawSphereWires(camera.target, .3f, 12, 12, ORANGE);
 				DrawSphere((Vector3){.0f, .0f, .0f}, 5.0f, BLUE);
-				DrawCubeWires((Vector3){0.0f, 0.0f,-MAX_DIST*5}, MAX_DIST*2, MAX_DIST*2, MAX_DIST*10, RED);
+				DrawCubeWires((Vector3){0.0f, 0.0f, -ARRIVAL_DIST / 2}, MAX_DIST*2, MAX_DIST*2, ARRIVAL_DIST, RED);
 			EndMode3D();
 			DrawText(TextFormat("Total de Modelos: %d", drawing.size + selection.size), 10, 30, 20, BLACK);
 			DrawText("[Botao Esquerdo] selecionar\n"

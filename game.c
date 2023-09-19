@@ -2,25 +2,39 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "spacecraft.c"
+#include "defs.h"
 
 /* TODO:
- * tiros;
- * naves inimigas;
- * movimentos;
+ * movimentos das naves inimigas;
+ * danos para os inimigos;
  * barra de vida;
  * menu;
  * texturas;
  * sons.
  * */
 
-/* armazenar os tiros em um vetor estático, calcular o máximo de tiros possíveis
- * de acordo com a frequência e distância máxima*/
+#define BULLET_SPEED_PER_SECOND 200.0f
+#define FIRING_RATE_PER_SECOND 3.0f 
 
 struct models_with_collisions *models;
 short model_count;
 struct list rocks = { 0 };
 struct list enemies = { 0 };
+struct list following = { 0 };
+struct list shots = { 0 };
 BoundingBox new_spaceship1, new_spaceship2;
+
+#define INITIAL_DIST 10000.0f
+#define LIMINAL (100.0f + 70.0f * following.size)
+
+// aplicar o losango
+
+struct enemy_spacecraft {
+	struct model shape;
+	unsigned char id;
+	int life;
+	float dist;
+};
 
 main()
 {
@@ -29,10 +43,19 @@ main()
 	int screen_width, screen_height;
 	Camera camera;
 	Matrix pos_spaceship;
-	struct node *next;
+	struct node *next, *curr;
 	struct model *draw_model;
 	int life = 5;
-	
+	Vector3 new_bullet, *ptrbul, aux_bullet, aux_model;
+	double prev_time, now;
+	float inc;
+	struct enemy_spacecraft new_enemy;
+
+	prev_time = GetTime();
+	now = .0;
+
+	new_enemy.life = 5;
+
 	camera.position = (Vector3){ 0.0f, 5.0f, 0.0f };
 	camera.target = (Vector3){0.0f, 4.5f,-1.0f };
 	camera.up = (Vector3){ .0f, 6.0f, .0f };
@@ -62,7 +85,10 @@ main()
 
 	load_map("teste4.map");
 	
+	SetRandomSeed(3);
+
 	while (!WindowShouldClose()) {
+		/*atualizar a camera de acordo com os frames???*/
 		UpdateMyCamera(&camera, CAMERA_THIRD_PERSON);
 		pos_spaceship = MatrixMultiply(MatrixMultiply(MatrixScale(1.5f, 1.5f, 1.5f),
 						MatrixRotate((Vector3){0.0f, 1.0f, 0.0f}, 1.57f)),
@@ -82,6 +108,18 @@ main()
 		if (!collision)
 			prev_collision = false;
 
+		for (next = shots.first; next;) {
+			ptrbul = (Vector3*)next->data;
+			if (ptrbul->z > -2 * ARRIVAL_DIST) {
+				ptrbul->z -= BULLET_SPEED_PER_SECOND * GetFrameTime();
+				next = next->next;
+			} else {
+				curr = next;
+				next = next->next;
+				list_remove(curr, &shots);
+			}
+		}
+
 		BeginDrawing();
 			ClearBackground(RAYWHITE);
 			BeginMode3D(camera);
@@ -92,33 +130,67 @@ main()
 							draw_model->angles,
 							draw_model->scale,
 							GRAY);
-					draw_collisions_wires(draw_model, models);
+					draw_collisions_wires(draw_model, &models[draw_model->model].collision_list);
 				}
-				for (next = enemies.first; next; next = next->next) {
+				for (next = enemies.first; next;) {
 					draw_model = (struct model*)next->data;
+					if (draw_model->position.z + LIMINAL - camera.target.z >= .0f) {
+						new_enemy.id = GetRandomValue(0, 2);
+						new_enemy.shape = *draw_model;
+						new_enemy.dist = camera.target.z - draw_model->position.z;
+						list_insert(&new_enemy, &following, sizeof(struct enemy_spacecraft));
+						curr = next;
+						next = next->next;
+						list_remove(curr, &enemies);
+						continue;
+					}
+					inc = INITIAL_DIST * fabs(draw_model->position.z + LIMINAL - camera.target.z) /
+						                                  (-draw_model->position.z);
+					aux_model = draw_model->position;
+					aux_model.x = aux_model.x > .0f? aux_model.x + inc : aux_model.x - inc;
+					aux_model.y = aux_model.y > .0f? aux_model.y + inc : aux_model.y - inc;
+					DrawModelRotate(models[draw_model->model].drawing,
+							aux_model,
+							draw_model->angles,
+							draw_model->scale,
+							GRAY);
+					next = next->next;
+				}
+				for (next = following.first; next; next = next->next) {
+					draw_model = &((struct enemy_spacecraft*)next->data)->shape;
+					draw_model->position.z -= ((struct enemy_spacecraft*)next->data)->dist - fabs(camera.target.z - draw_model->position.z);
 					DrawModelRotate(models[draw_model->model].drawing,
 							draw_model->position,
 							draw_model->angles,
 							draw_model->scale,
 							GRAY);
-					draw_collisions_wires(draw_model, models);
+					draw_collisions_wires(draw_model, &models[draw_model->model].collision_list);
 				}
 				DrawSphere((Vector3){camera.position.x+250.0f, camera.position.y+150.0f, camera.position.z-700.0f}, 100.0f, YELLOW);
 				DrawModel(mod_spaceship, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, RED);
-				/*
-				DrawBoundingBox(new_spaceship1, PURPLE);
-				DrawBoundingBox(new_spaceship2, BLACK);
-				if (collision) {
-					DrawSphere(new_spaceship1.min, 0.1f, RED);
-					DrawSphere(new_spaceship1.max, 0.1f, ORANGE);
-				} else {
-					DrawSphere(new_spaceship1.min, 0.1f, BLUE);
-					DrawSphere(new_spaceship1.max, 0.1f, GREEN);
+				for (next = shots.first; next; next = next->next) {
+					aux_bullet = new_bullet = *(Vector3*)next->data;
+					new_bullet.z += .2f;
+					aux_bullet.z -= .4f;
+					DrawCapsule(new_bullet, aux_bullet, .125f, 4, 4, ORANGE);
 				}
-				*/
 			EndMode3D();
 			DrawFPS(10, 10);
 		EndDrawing();
+		
+		now = GetTime();
+		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
+		    now - prev_time > 1.0f / FIRING_RATE_PER_SECOND) {
+			new_bullet.x = camera.target.x-1.58f;
+			new_bullet.y = camera.target.y-1.926f;
+			new_bullet.z = camera.target.z - 0.62 - .4f / 2;
+			list_insert(&new_bullet, &shots, sizeof(Vector3));
+			new_bullet.x += 3.22f;
+			new_bullet.y -= 0.05f;
+			new_bullet.z -= 0.03f;
+			list_insert(&new_bullet, &shots, sizeof(Vector3));
+			prev_time = GetTime();
+		}
 	}
 	CloseWindow();
 }

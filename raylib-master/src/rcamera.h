@@ -529,66 +529,66 @@ void UpdateMyCamera(Camera *camera, int mode)
     
     // Keyboard support
     
-    static float deltatimeup = 0.0f;
-    static float deltatimeside = 0.0f;
-    static float velocity = .2f;
+    static float delta_vel_up = 0.0f;
+    static float delta_vel_side = 0.0f;
+    static float velocity = SPACECRAFT_SPEED;
     
     if (IsKeyPressed(KEY_SPACE))
-        velocity = velocity == .2f? .5f : .2f;
+        velocity = velocity == SPACECRAFT_SPEED? SPACECRAFT_SPEED_MAX : SPACECRAFT_SPEED;
     camera->target.z -= velocity;
     camera->position.z -= velocity;
     if (IsKeyDown(KEY_W)) {
-        if (deltatimeup < 0.0f)
-            deltatimeup = 0.0f;
-        else if (deltatimeup > LIMIT_VELOCITY)
-            deltatimeup = LIMIT_VELOCITY;
-        if (camera->target.y + deltatimeup <  MAX_DIST + 1.8f)
-            deltatimeup += VELOCITY_FORWARD;
+        if (delta_vel_up < 0.0f)
+            delta_vel_up = 0.0f;
+        else if (delta_vel_up > LIMIT_VELOCITY)
+            delta_vel_up = LIMIT_VELOCITY;
+        if (camera->target.y + delta_vel_up <  MAX_DIST + 1.8f)
+            delta_vel_up += VELOCITY_FORWARD;
         else
-            deltatimeup =  MAX_DIST + 1.8f - camera->target.y;
-        camera->target.y += deltatimeup;
-        camera->position.y += deltatimeup;
+            delta_vel_up =  MAX_DIST + 1.8f - camera->target.y;
+        camera->target.y += delta_vel_up;
+        camera->position.y += delta_vel_up;
     }
     if (IsKeyDown(KEY_S)) {
-        if (deltatimeup > 0.0f)
-            deltatimeup = 0.0f;
-        else if (deltatimeup < -LIMIT_VELOCITY)
-            deltatimeup = -LIMIT_VELOCITY;
-        if (camera->target.y + deltatimeup > -MAX_DIST + 1.8f)
-            deltatimeup -= VELOCITY_FORWARD;
+        if (delta_vel_up > 0.0f)
+            delta_vel_up = 0.0f;
+        else if (delta_vel_up < -LIMIT_VELOCITY)
+            delta_vel_up = -LIMIT_VELOCITY;
+        if (camera->target.y + delta_vel_up > -MAX_DIST + 1.8f)
+            delta_vel_up -= VELOCITY_FORWARD;
         else
-            deltatimeup = -MAX_DIST + 1.8f - camera->target.y;
-        camera->target.y += deltatimeup;
-        camera->position.y += deltatimeup;
+            delta_vel_up = -MAX_DIST + 1.8f - camera->target.y;
+        camera->target.y += delta_vel_up;
+        camera->position.y += delta_vel_up;
     }
     if (IsKeyDown(KEY_D)) {
-        if (deltatimeside < 0.0f)
-            deltatimeside = 0.0f;
-        else if (deltatimeside > LIMIT_VELOCITY)
-            deltatimeside = LIMIT_VELOCITY;
-        if (camera->target.x + deltatimeside <  MAX_DIST)
-            deltatimeside += VELOCITY_SIDE;
+        if (delta_vel_side < 0.0f)
+            delta_vel_side = 0.0f;
+        else if (delta_vel_side > LIMIT_VELOCITY)
+            delta_vel_side = LIMIT_VELOCITY;
+        if (camera->target.x + delta_vel_side <  MAX_DIST)
+            delta_vel_side += VELOCITY_SIDE;
         else
-            deltatimeside =  MAX_DIST - camera->target.x;
-        camera->target.x += deltatimeside;
-        camera->position.x += deltatimeside; 
+            delta_vel_side =  MAX_DIST - camera->target.x;
+        camera->target.x += delta_vel_side;
+        camera->position.x += delta_vel_side; 
     }
     if (IsKeyDown(KEY_A)) {
-        if (deltatimeside > 0.0f)
-            deltatimeside = 0.0f;
-        else if (deltatimeside < -LIMIT_VELOCITY)
-            deltatimeside = -LIMIT_VELOCITY;
-        if (camera->target.x + deltatimeside > -MAX_DIST)
-            deltatimeside -= VELOCITY_SIDE;
+        if (delta_vel_side > 0.0f)
+            delta_vel_side = 0.0f;
+        else if (delta_vel_side < -LIMIT_VELOCITY)
+            delta_vel_side = -LIMIT_VELOCITY;
+        if (camera->target.x + delta_vel_side > -MAX_DIST)
+            delta_vel_side -= VELOCITY_SIDE;
         else
-            deltatimeside = -MAX_DIST - camera->target.x;
-        camera->target.x += deltatimeside;
-        camera->position.x += deltatimeside; 
+            delta_vel_side = -MAX_DIST - camera->target.x;
+        camera->target.x += delta_vel_side;
+        camera->position.x += delta_vel_side; 
     }
     if (IsKeyReleased(KEY_S) || IsKeyReleased(KEY_W))
-        deltatimeup = 0.0f;
+        delta_vel_up = 0.0f;
     if (IsKeyReleased(KEY_A) || IsKeyReleased(KEY_D))
-        deltatimeside = 0.0f;
+        delta_vel_side = 0.0f;
 }
 
 #endif // !RCAMERA_STANDALONE
