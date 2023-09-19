@@ -4,24 +4,13 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "defs.h"
-#include "linked_list.c"
+#include "spacecraft.c"
 
 // fazer mais um tipo de grupo???
 
-#define MAX_MAP_NAME_LEN 40
 #define MAX_MODELS 10
 
-struct model {
-	unsigned char model;
-	Vector3 position, angles;
-	float scale;
-};
-
-struct models_with_collisions {
-	char pathname[MAX_MAP_NAME_LEN];
-	Model drawing;
-	struct list collision_list;
-} models[MAX_MODELS];
+struct models_with_collisions models[MAX_MODELS];
 short model_count;
 
 #define NEW_MODEL new_model.position = camera.target; \
@@ -92,7 +81,7 @@ Camera camera = { 0 };
 
 main()
 {
-	void draw_collisions_wires(), save_map(), open_map();
+	void save_map(), open_map();
 	struct node *get_selected();
 	struct model new_model, *draw_model;
 	struct list selection = { 0 }, ln = { 0 };
@@ -291,15 +280,15 @@ main()
 				for (next = drawing.first; next; next = next->next) {
 					draw_model = (struct model*)next->data;
 					DrawModelRotate(models[draw_model->model].drawing, draw_model->position, draw_model->angles, draw_model->scale, selected == next? PURPLE : GRAY);
-					draw_collisions_wires(draw_model);
+					draw_collisions_wires(draw_model, models);
 				}
 				for (next = selection.first; next; next = next->next) {
 					draw_model = (struct model*)next->data;
 					DrawModelRotate(models[draw_model->model].drawing, draw_model->position, draw_model->angles, draw_model->scale, RED);
-					draw_collisions_wires(draw_model);
+					draw_collisions_wires(draw_model, models);
 				}
 				DrawSphereWires(camera.target, .3f, 12, 12, ORANGE);
-				DrawSphere((Vector3){.0f, .0f, .0f}, 2.0f, BLUE);
+				DrawSphere((Vector3){.0f, .0f, .0f}, 5.0f, BLUE);
 				DrawCubeWires((Vector3){0.0f, 0.0f,-MAX_DIST*5}, MAX_DIST*2, MAX_DIST*2, MAX_DIST*10, RED);
 			EndMode3D();
 			DrawText(TextFormat("Total de Modelos: %d", drawing.size + selection.size), 10, 30, 20, BLACK);
@@ -322,37 +311,6 @@ main()
 				DrawText(name, 10+3, 250, 30, WHITE);
 			}
 		EndDrawing();
-	}
-}
-
-#define TRANFORM_SPHERE(current_model) \
-		Vector3Transform(ptrm->position, \
-				MatrixMultiply( \
-					MatrixMultiply( \
-						MatrixScale(current_model->scale, current_model->scale, current_model->scale), \
-						MatrixRotateXYZ(Vector3Scale(current_model->angles, DEG2RAD)) \
-					), \
-					MatrixTranslate(current_model->position.x, \
-						current_model->position.y, \
-						current_model->position.z) \
-					) \
-				);
-
-void draw_collisions_wires(current_model)
-struct model *current_model;
-{
-	struct list *collisions;
-	struct node *next;
-	struct model *ptrm;
-	float new_scale;
-	Vector3 temp;
-
-	collisions = &models[current_model->model].collision_list;
-	for (next = collisions->first; next; next = next->next) {
-		ptrm = (struct model*)next->data;
-		temp = TRANFORM_SPHERE(current_model)
-		new_scale = ptrm->scale * current_model->scale;
-		DrawSphereWires(temp, new_scale, 5, 5, GREEN);
 	}
 }
 
@@ -380,13 +338,14 @@ struct list *l;
 	return NULL;
 }
 
+/*salvar em um arquivo temporário?*/
 void save_map(name)
 char *name;
 {
 	struct node *next;
 	struct model *current;
-	FILE *fp;
 	short map[MAX_MODELS] = { 0 }, i, count = 0;
+	FILE *fp;
 	
 	for (i = 0; i < MAX_MODELS; i++)
 		map[i] = -1;
@@ -396,10 +355,10 @@ char *name;
 			map[i] = count++;
 	}
 	fp = fopen(name, "wb");
-	fprintf(fp, "%d\n", count);
+	fprintf(fp, "%hd\n", count);
 	for (i = 0; i < MAX_MODELS; i++)
 		if (map[i] >= 0) {
-			fprintf(fp, "%s %d\n", models[i].pathname, models[i].collision_list.size);
+			fprintf(fp, "%s %hd\n", models[i].pathname, models[i].collision_list.size);
 			for (next = models[i].collision_list.first; next; next = next->next) {
 				current = (struct model*)next->data;
 				fprintf(fp, "%.4f %.4f %.4f %.4f\n",
@@ -409,7 +368,7 @@ char *name;
 						current->scale);
 			}
 		}
-	fprintf(fp, "%d\n", drawing.size);
+	fprintf(fp, "%hd\n", drawing.size);
 	for (next = drawing.first; next; next = next->next) {
 		current = (struct model*)next->data;
 		fprintf(fp, "%hhu\n", map[current->model]);
@@ -425,20 +384,20 @@ char *name;
 }
 
 void open_map(name)
-char *name;
+char name[];
 {
-	FILE *fp;
-	short map[MAX_MODELS];
-	int i, j, k;
-	char model_name[MAX_MAP_NAME_LEN];
 	struct model new;
+	char model_name[MAX_MAP_NAME_LEN];
+	short map[MAX_MODELS];
+	short i, j, k, total_models;
+	FILE *fp;
 	
 	for (i = 0; i < MAX_MODELS; i++)
 		map[i] = -1;	
 	fp = fopen(name, "r");
-	fscanf(fp, "%d\n", &i);
-	while (i--) {
-		fscanf(fp, "%s %d\n", model_name, &k);
+	fscanf(fp, "%hd\n", &total_models);
+	for (i=0; i < total_models; i++) {
+		fscanf(fp, "%s %hd\n", model_name, &k);
 		for (j=0; j < model_count; j++)
 			if (!strcmp(models[j].pathname, model_name)) {
 				map[i] = j;
@@ -447,7 +406,7 @@ char *name;
 		while (k--)
 			while (fgetc(fp) != '\n');
 	}
-	fscanf(fp, "%d\n", &j);
+	fscanf(fp, "%hd\n", &j);
 	while (j--) {
 		fscanf(fp, "%hhu\n", &new.model);
 		new.model = map[new.model];
