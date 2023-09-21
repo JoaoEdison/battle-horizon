@@ -16,6 +16,25 @@ struct models_with_collisions {
 	struct list collision_list;
 };
 
+#define INPUT_QTT 7
+
+struct enemy_spacecraft {
+	struct model shape;
+	Color color;
+	float dist;
+	int life;
+	float last_state[INPUT_QTT];
+	struct {
+		unsigned collision : 1;
+		unsigned shooted : 1;
+		unsigned error : 1;
+		unsigned dont_shoot : 1;
+	} penalties;
+	float last_shoot;
+	unsigned char ammunition, has_penalty;
+	struct list bullets;
+};
+
 #define TRANFORM_SPHERE(current_model) \
 		Vector3Transform(ptrm->position, \
 				MatrixMultiply( \

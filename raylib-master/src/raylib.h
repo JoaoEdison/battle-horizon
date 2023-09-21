@@ -1175,6 +1175,10 @@ RLAPI float GetGesturePinchAngle(void);                 // Get gesture pinch ang
 RLAPI void UpdateCamera(Camera *camera, int mode);      // Update camera position for selected mode
 RLAPI void UpdateCameraPro(Camera *camera, Vector3 movement, Vector3 rotation, float zoom); // Update camera movement/rotation
 
+
+RLAPI void UpdateMyCamera(Camera *camera, float deltatime); //Minha implementacao da camera
+
+
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
 //------------------------------------------------------------------------------------

@@ -342,35 +342,38 @@ struct list *l;
 void save_map(name)
 char *name;
 {
-	struct node *next;
+	struct node *next1, *next2;
 	struct model *current;
-	short map[MAX_MODELS] = { 0 }, i, count = 0;
 	FILE *fp;
+	short i, count = 0, map[MAX_MODELS];
+	struct list present = { 0 };
 	
 	for (i = 0; i < MAX_MODELS; i++)
 		map[i] = -1;
-	for (next = drawing.first; next; next = next->next) {
-		i = ((struct model*)next->data)->model;
-		if (map[i] < 0)
+	for (next1 = drawing.first; next1; next1 = next1->next) {
+		i = ((struct model*)next1->data)->model;
+		if (map[i] < 0) {
 			map[i] = count++;
+			list_insert(&i, &present, sizeof(short));
+		}
 	}
 	fp = fopen(name, "wb");
 	fprintf(fp, "%hd\n", count);
-	for (i = 0; i < MAX_MODELS; i++)
-		if (map[i] >= 0) {
-			fprintf(fp, "%s %hd\n", models[i].pathname, models[i].collision_list.size);
-			for (next = models[i].collision_list.first; next; next = next->next) {
-				current = (struct model*)next->data;
-				fprintf(fp, "%.4f %.4f %.4f %.4f\n",
-						current->position.x,
-						current->position.y,
-						current->position.z,
-						current->scale);
-			}
+	for (next1 = present.first; next1; next1 = next1->next) {
+		i = *(short*)next1->data;
+		fprintf(fp, "%s %hd\n", models[i].pathname, models[i].collision_list.size);
+		for (next2 = models[i].collision_list.first; next2; next2 = next2->next) {
+			current = (struct model*)next2->data;
+			fprintf(fp, "%.4f %.4f %.4f %.4f\n",
+					current->position.x,
+					current->position.y,
+					current->position.z,
+					current->scale);
 		}
+	}
 	fprintf(fp, "%hd\n", drawing.size);
-	for (next = drawing.first; next; next = next->next) {
-		current = (struct model*)next->data;
+	for (next1 = drawing.first; next1; next1 = next1->next) {
+		current = (struct model*)next1->data;
 		fprintf(fp, "%hhu\n", map[current->model]);
 		fprintf(fp, "%.4f %.4f %.4f %.4f\n",
 				current->position.x,
@@ -381,6 +384,8 @@ char *name;
 				current->angles.y, current->angles.z);
 	}
 	fclose(fp);
+	while (present.first)
+		list_remove(present.first, &present);
 }
 
 void open_map(name)
