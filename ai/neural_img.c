@@ -42,18 +42,22 @@ static struct {
 
 float *network_output;
 
+/*aqui usa-se uma função de ativação para a saída: tanh*/
 void run(img_view)
 float *img_view;
 {
 	struct net *ptrn;
 	struct layer *ptrl;
-	float sum;
+	//float sum;
 	int i;
 
 	for (ptrn=bignet.arr; ptrn < bignet.arr + bignet.num_nets; ptrn++) {
 		ptrl = ptrn->arr;
 		if (ptrn->input_first)
-			cblas_sgemv(CblasRowMajor, CblasNoTrans, ptrl->n, ptrl->prev_n, 1, ptrl->w[0], ptrl->prev_n, ptrn->input_first, 1, 0, ptrl->z, 1);
+			cblas_sgemv(CblasRowMajor, CblasNoTrans, ptrl->n,
+					ptrl->prev_n, 1, ptrl->w[0],
+					ptrl->prev_n, ptrn->input_first, 1, 0,
+					ptrl->z, 1);
 		else {
 			cblas_sgemv(CblasRowMajor, CblasNoTrans, ptrl->n, ptrl->prev_n, 1, ptrl->w[0], ptrl->prev_n, img_view, 1, 0, ptrl->z, 1);
 			img_view += ptrl->prev_n;
@@ -67,12 +71,16 @@ float *img_view;
 			for (i=0; i < ptrl->n; i++)
 				ptrl->z[i] += ptrl->b[i];
 			if (ptrl->a == network_output) {
+				/*
 				for (sum=i=0; i < ptrl->n; i++) {
 					ptrl->a[i] = exp(ptrl->z[i]);
 					sum += ptrl->a[i]; 
 				}
 				for (i=0; i < ptrl->n; i++)
 					ptrl->a[i] /= sum;
+				*/
+				for (i=0; i < ptrl->n; i++)
+					ptrl->a[i] = ACTIVATION_FN(ptrl->z[i]);
 			} else
 				for (i=0; i < ptrl->n; i++)
 					ptrl->a[i] = ACTIVATION_FN(ptrl->z[i]);
@@ -134,7 +142,9 @@ void clear_backpr()
 				ptrl->err_b[i] = 0;
 			}
 }
-
+/*aqui usa-se uma derivada da função de custo com a em evidencia*/
+/*e depois multiplica-se pela derivada da função de ativação*/
+/*a função de custo em uso é o erro quadrático*/
 void backpr(img_view, expected)
 float *img_view, *expected;
 {
@@ -151,8 +161,10 @@ float *img_view, *expected;
 		ptrberr = bignet.N > 1? ptrl->aux_b : ptrl->err_b;
 		/*delta*/
 		if (ptrn->out_id == -1)
-			for (i=0; i < ptrl->n; i++)
-				ptrberr[i] = expected[i]? ptrl->a[i] - 1 : ptrl->a[i];
+			for (i=0; i < ptrl->n; i++) {
+				//ptrberr[i] = expected[i]? ptrl->a[i] - 1 : ptrl->a[i];
+				ptrberr[i] = (ptrl->a[i] - expected[i]) * DERIVATIVE_ACTIVATION_FN(ptrl->z[i]);
+			}
 		else
 			for (i=0; i < ptrl->n; i++)
 				ptrberr[i] *= DERIVATIVE_ACTIVATION_FN(ptrl->z[i]);

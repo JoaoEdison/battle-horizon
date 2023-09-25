@@ -21,7 +21,7 @@ void load_models()
 {
 	struct model new_box = { 0 };
 
-	strcpy(models[0].pathname, "modelos/rock1.glb");
+	strcpy(models[0].pathname, "models/rock1.glb");
 	models[0].drawing = LoadModel(models[0].pathname);
 	models[0].collision_list.first = NULL;
 	models[0].collision_list.size = 0;
@@ -29,7 +29,7 @@ void load_models()
 	new_box.position = (Vector3){ 0 };
 	list_insert(&new_box, &models[0].collision_list, sizeof(struct model));
 
-	strcpy(models[1].pathname, "modelos/rock2.glb");
+	strcpy(models[1].pathname, "models/rock2.glb");
 	models[1].drawing = LoadModel(models[1].pathname);
 	models[1].collision_list.first = NULL;
 	models[1].collision_list.size = 0;
@@ -40,7 +40,7 @@ void load_models()
 	new_box.position = (Vector3){ .2f, -.2f, .0f };
 	list_insert(&new_box, &models[1].collision_list, sizeof(struct model));
 
-	strcpy(models[2].pathname, "modelos/rock3.glb");
+	strcpy(models[2].pathname, "models/rock3.glb");
 	models[2].drawing = LoadModel(models[2].pathname);
 	models[2].collision_list.first = NULL;
 	models[2].collision_list.size = 0;
@@ -48,7 +48,7 @@ void load_models()
 	new_box.position = (Vector3){ 0 };
 	list_insert(&new_box, &models[2].collision_list, sizeof(struct model));
 
-	strcpy(models[3].pathname, "modelos/enemy.glb");
+	strcpy(models[3].pathname, "models/enemy.glb");
 	models[3].drawing = LoadModel(models[3].pathname);
 	models[3].collision_list.first = NULL;
 	models[3].collision_list.size = 0;
@@ -329,7 +329,7 @@ struct list *l;
 		collisions = &models[target->model].collision_list;
 		for (next_collision = collisions->first; next_collision; next_collision = next_collision->next) {
 			ptrm = (struct model*)next_collision->data;
-			temp = TRANFORM_SPHERE(target)
+			temp = TRANFORM_SPHERE(target, ptrm->position)
 			new_scale = ptrm->scale * target->scale;
 			if (CheckCollisionSpheres(temp, new_scale, camera.target, .3f))
 				return next;

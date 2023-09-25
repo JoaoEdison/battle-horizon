@@ -16,13 +16,12 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <png.h>
-/*1.6.37*/
+#include <stdio.h>
 #include <stdlib.h>
 #include <cblas.h>
 #include <math.h>
 
-#define INPUT_QTT 7
+#define INPUT_QTT 11
 #define MAX_CLASSES 5
 
 /*Activation function used in all layers except in the last one*/
@@ -34,8 +33,8 @@
 */
 
 /*Learning rate and momentum*/
-#define RATE 0.05
-#define MOMENTUM .3
+#define RATE 0.5f
+#define MOMENTUM 0.3f
 
 /* 'neurons_per_layer': This vector defines the number of neurons at each layer. 
    (Feedforward sense: first to last)
@@ -60,13 +59,13 @@ extern float *network_output;
  * 	'predi' receives the class index predicted by the net.
  * 	'predv' receives the corresponding probability.
  * */
-float hit(int class, int *predi, float *predv);
+float hit(int classidx, int *predi, float *predv);
 
 /* cross_entropy:
  * 	Calculates the Cross Entropy, measured in nats, of the net output.
  * 	'class' is the index of the expected class.
  * */
-float cross_entropy(int class);
+float cross_entropy(int classidx);
 
 /* init_net_topology:
  * 	Uses 'nets' array to assemble the network.
