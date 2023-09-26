@@ -6,13 +6,14 @@
 #include "ai/neural_img.h"
 #include "ui.c"
 
-//#define PLAY
+#define PLAY
 
 /* TODO:
- * Venceu;
- * chegada;
- * menu;
- * separar os códigos de treinamento
+ * implementar as condições de vitória para cada nível;
+ * ranking;
+ * sobre o jogo;
+ * municao;
+ * separar os códigos de treinamento;
  * texturas;
  * sons.
  * */
@@ -36,7 +37,9 @@ struct enemy_spacecraft {
 	bool has_penalty;
 #endif
 };
-#ifndef PLAY
+#ifdef PLAY
+Font font;
+#else
 struct enemy_shot {
 	Vector3 position;
 	float state[INPUT_QTT];
@@ -56,15 +59,17 @@ struct list shots = { 0 };
 struct enemy_spacecraft new_enemy;
 int life;
 
+int screen_width, screen_height;
 Camera camera;
 Model mod_spaceship;
 BoundingBox new_spaceship1, new_spaceship2;
+void (*current_screen)();
+bool exit_game = false;
 
 main(argc, argv)
 char *argv[];
 {
-	void load_map(), init_network(), manage_player(), manage_enemies(), draw_scene();
-	int screen_width, screen_height;
+	void load_map(), init_network(), menu(), game();
 
 	SetRandomSeed(3);
 	init_network();
@@ -103,51 +108,94 @@ char *argv[];
 	InitWindow(0, 0, "Batalha Espacial");
 	screen_width = GetScreenWidth();
 	screen_height = GetScreenHeight();
-	SetMousePosition(screen_width / 2, screen_height / 2);
 #ifdef PLAY
 	ToggleFullscreen();
-	DisableCursor();
 	load_map("teste4.map");
+	font = LoadFont("font/setback.png");
+	current_screen = menu;
 #else
 	load_map(argv[1]);
+	current_screen = game;
 #endif
 	SetTargetFPS(60);
 
 	mod_spaceship = LoadModel("models/spacecraft.glb");
 	
-	while (!WindowShouldClose()) {
-		UpdateMyCamera(&camera, GetFrameTime());
-		manage_player();	
-		manage_enemies();
-		now = GetTime();
-		if (now - prev_back > 5.0f) {
-			ini_backpr(enemy_errors.size);
-			clear_backpr();
-			for (next = enemy_errors.first; next; next = next->next) {
-				ptrerr = (struct enemy_error*)next->data;
-				backpr(ptrerr->x, ptrerr->y);
-			}
-			while (enemy_errors.first)
-				list_remove(enemy_errors.first, &enemy_errors);
-			apply_backpr();
-			end_backpr();
-			prev_back = GetTime();
-		}
-		BeginDrawing();
-			ClearBackground(RAYWHITE);
-			BeginMode3D(camera);
-				draw_scene();
-			EndMode3D();
-			DrawFPS(10, 10);
-#ifdef PLAY
-			draw_ui(screen_width, screen_height, -camera.target.z, life);
-#endif
-		EndDrawing();
-	}
+	while (!WindowShouldClose() && !exit_game)
+		current_screen();
 	CloseWindow();
 #ifndef PLAY
 	save_weights();
 #endif
+}
+
+int screen = 0;
+void menu()
+{
+	void game();
+
+	BeginDrawing();
+		ClearBackground(BLACK);
+		DrawTextEx(font, "SPACECRAFT", (Vector2){
+				screen_width/2 - MeasureTextEx(font, "SPACECRAFT", font.baseSize * TITLE_SIZE, SPACING).x/2,
+				MeasureTextEx(font, "SPACECRAFT", font.baseSize * TITLE_SIZE, SPACING).y/4
+				}, font.baseSize * TITLE_SIZE, SPACING, BLUE);
+		switch (screen) {
+			case 1:
+				screen = draw_play(screen_width, screen_height, &font);
+				break;
+			case 2:
+				SetMousePosition(screen_width / 2, screen_height / 2);
+				DisableCursor();
+				current_screen = game;
+				break;
+			case 3:
+				exit_game = true;
+				break;
+			default:
+				screen = draw_menu(screen_width, screen_height, &font);
+				break;
+		}
+	EndDrawing();	
+}
+
+void game()
+{
+	void manage_player(), manage_enemies(), draw_scene();
+
+	UpdateMyCamera(&camera, GetFrameTime());
+	manage_player();	
+	manage_enemies();
+#ifndef PLAY
+	now = GetTime();
+	if (now - prev_back > 5.0f) {
+		ini_backpr(enemy_errors.size);
+		clear_backpr();
+		for (next = enemy_errors.first; next; next = next->next) {
+			ptrerr = (struct enemy_error*)next->data;
+			backpr(ptrerr->x, ptrerr->y);
+		}
+		while (enemy_errors.first)
+			list_remove(enemy_errors.first, &enemy_errors);
+		apply_backpr();
+		end_backpr();
+		prev_back = GetTime();
+	}
+#endif
+	BeginDrawing();
+		ClearBackground(RAYWHITE);
+		BeginMode3D(camera);
+			draw_scene();
+		EndMode3D();
+		DrawFPS(10, 10);
+#ifdef PLAY
+		if (draw_ui(screen_width, screen_height, -camera.target.z, life, &font)) {
+			current_screen = menu;
+			EnableCursor();
+			screen = 1;
+		}
+#endif
+	EndDrawing();
 }
 
 unsigned layers1[] = {INPUT_QTT, 20, 10, 5};
@@ -404,6 +452,7 @@ struct node **enemy;
 
 #define BULLET_PLAYER_SIZE 2.0f
 #define ENEMY_FIELD 5.0f
+#define LIMIT_DISTANCE_TO_PLAYER 10.0f
 
 collision_bullet_field(bullet, enemy)
 Vector3 *bullet;
@@ -435,7 +484,6 @@ void manage_enemies()
 #else
 	int i;
 	struct enemy_shot new_shot, *ptrbullet;
-	float distance_from_player;
 #endif
 	for (next_enemy = following.first; next_enemy;) {
 		moved = false;
@@ -484,7 +532,7 @@ void manage_enemies()
 		if (Vector3Distance(ptrenemy->shape.position,
 					(Vector3){camera.target.x,
 					camera.target.y - 1.8f, camera.target.z
-					+ 0.5f}) > ptrenemy->dist + 5.0f &&
+					+ 0.5f}) > ptrenemy->dist + LIMIT_DISTANCE_TO_PLAYER &&
 		    now - ptrenemy->last_far > 2.0f) {
 			ptrenemy->penalties.faraway = 1;
 			ptrenemy->has_penalty = 1;
@@ -738,6 +786,11 @@ void draw_scene()
 				draw_model->scale * ENEMY_FIELD,
 				4, 4,
 				BLACK);
+		DrawLine3D(draw_model->position,
+			  (Vector3){camera.target.x, camera.target.y - 1.8f, camera.target.z + 0.5f}, 
+			  Vector3Distance(draw_model->position, 
+				          (Vector3){camera.target.x, camera.target.y - 1.8f, camera.target.z + 0.5f}) >
+			                  ((struct enemy_spacecraft*)next->data)->dist + LIMIT_DISTANCE_TO_PLAYER? RED : BLUE);
 #endif
 	}
 	DrawSphere((Vector3){camera.position.x+250.0f, camera.position.y+150.0f, camera.position.z-700.0f}, 100.0f, YELLOW);
