@@ -25,10 +25,14 @@
 
 #define PLAY
 
+/*quando abre o jogo, lê o csv*/
+/*termina o jogo, se é vitória grava no ranking*/
+/*fecha o jogo, grava no csv*/
+/*ordenado por pontuação, data e nome*/
+/*nome, 00/00/00, pontuação*/
+
 /* TODO:
- * implementar as condições de vitória para cada nível;
  * ranking;
- * sobre o jogo;
  * municao;
  * separar os códigos de treinamento;
  * texturas;
@@ -74,7 +78,6 @@ struct list rocks = { 0 };
 struct list following = { 0 };
 struct list shots = { 0 };
 struct enemy_spacecraft new_enemy;
-int life;
 
 int screen_width, screen_height;
 Camera camera;
@@ -98,7 +101,7 @@ char *argv[];
 	new_enemy.bullets.size = 0;
 #ifdef PLAY
 	new_enemy.life = 5;
-	life = MAX_LIFE;
+	game_state.life = MAX_LIFE;
 #else
 	int i;
 	float now, prev_back = 0.0f;
@@ -137,14 +140,30 @@ char *argv[];
 	SetTargetFPS(60);
 
 	mod_spaceship = LoadModel("models/spacecraft.glb");
-	
+
+#ifdef PLAY
 	while (!WindowShouldClose() && !exit_game)
 		current_screen();
+#else
+	while (!WindowShouldClose())
+		game();
+#endif
 	CloseWindow();
 #ifndef PLAY
 	save_weights();
 #endif
 }
+
+struct model enemies[10];
+int total_enemies = 0, first_enemy = 0;
+sort_by_dist(x, y)
+void *x, *y;
+{
+	return ((struct model*)y)->position.z - ((struct model*)x)->position.z;
+}
+
+#ifdef PLAY
+char name[20] = "nome";
 
 int screen = 0;
 void menu()
@@ -159,14 +178,34 @@ void menu()
 				}, font.baseSize * TITLE_SIZE, SPACING, BLUE);
 		switch (screen) {
 			case 1:
-				screen = draw_play(screen_width, screen_height, &font);
+				screen = draw_play(screen_width, screen_height, &font, name);
 				break;
 			case 2:
 				SetMousePosition(screen_width / 2, screen_height / 2);
 				DisableCursor();
 				current_screen = game;
+
+				camera.position = (Vector3){ 0.0f, 5.0f, 0.0f };
+				camera.target = (Vector3){0.0f, 4.5f,-1.0f };
+				camera.up = (Vector3){ .0f, 6.0f, .0f };
+				game_state.life = MAX_LIFE;
+				game_state.state = 0;
+				game_state.prev_time = 0.0f;
+				game_state.score = 0;
+				while (following.first) {
+					while (((struct enemy_spacecraft*)following.first->data)->bullets.first)
+						list_remove(((struct enemy_spacecraft*)following.first->data)->bullets.first,
+							    &((struct enemy_spacecraft*)following.first->data)->bullets);
+					list_remove(following.first, &following);
+				}
+				first_enemy = 0;
+				game_state.time = GetTime();
+				
 				break;
 			case 3:
+				screen = draw_about(screen_width, screen_height, &font);
+				break;
+			case 4:
 				exit_game = true;
 				break;
 			default:
@@ -175,15 +214,30 @@ void menu()
 		}
 	EndDrawing();	
 }
+#endif
 
 void game()
 {
 	void manage_player(), manage_enemies(), draw_scene();
+#ifndef PLAY
+	struct node *next;
+	struct enemy_error *ptrerr;
+	float now, prev_back;
 
+	prev_back = 0.0f;
+#endif
 	UpdateMyCamera(&camera, GetFrameTime());
 	manage_player();	
 	manage_enemies();
-#ifndef PLAY
+#ifdef PLAY
+	if (!game_state.state) {
+		if (-camera.target.z > ARRIVAL_DIST)
+			game_state.state = GetTime() - game_state.time >= DEADLINE_SECS-1.0f || following.size? -1 : 1;
+		if (!game_state.life)
+			game_state.state = -1;
+	}
+	game_state.distance = -camera.target.z;
+#else
 	now = GetTime();
 	if (now - prev_back > 5.0f) {
 		ini_backpr(enemy_errors.size);
@@ -206,7 +260,7 @@ void game()
 		EndMode3D();
 		DrawFPS(10, 10);
 #ifdef PLAY
-		if (draw_ui(screen_width, screen_height, -camera.target.z, life, &font)) {
+		if (draw_ui(screen_width, screen_height, &font)) {
 			current_screen = menu;
 			EnableCursor();
 			screen = 1;
@@ -224,14 +278,6 @@ void init_network()
 		load_weights(1);
 	else
 		init_random_weights();
-}
-
-struct model enemies[10];
-int total_enemies = 0, first_enemy = 0;
-sort_by_dist(x, y)
-void *x, *y;
-{
-	return ((struct model*)y)->position.z - ((struct model*)x)->position.z;
 }
 
 void load_map(name)
@@ -314,7 +360,7 @@ void manage_player()
 	collision = collision_spacecraft_rocks();
 	if (collision && !prev_collision) {
 		prev_collision = true;
-		life--;
+		game_state.life--;
 	}
 	if (!collision)
 		prev_collision = false;
@@ -386,6 +432,9 @@ void manage_player()
 		new_bullet.z -= 0.03f;
 		list_insert(&new_bullet, &shots, sizeof(Vector3));
 		prev_time = GetTime();
+#ifdef PLAY
+		game_state.score -= 2;
+#endif
 	}
 }
 
@@ -527,7 +576,7 @@ void manage_enemies()
 				continue;
 			}
 			if (collision_bullet_player(ptrbullet)) {
-				--life;
+				--game_state.life;
 				curr = next;
 				next = next->next;
 				list_remove(curr, &ptrenemy->bullets);
@@ -582,7 +631,7 @@ void manage_enemies()
 				continue;
 			}
 			if (collision_bullet_player(ptrbullet->position)) {
-				--life;
+				--game_state.life;
 				for (i=0; i < MAX_CLASSES; i++)
 					current_error.y[i] = 0.0f;
 				current_error.y[4] = 1.0f;
