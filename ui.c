@@ -16,6 +16,9 @@
   with this program; If not, see <http://www.gnu.org/licenses/>
 */
 #include <raylib.h>
+#include <time.h>
+#include "linked_list.c"
+#include "array.c"
 #include "defs.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.c"
@@ -27,13 +30,70 @@
 #define SPACING 4
 #define WIN_MESSAGE_SIZE 8
 
+#define MAX_NAME_LEN 20
+
+Font font;
+
+struct score_entry {
+	char name[MAX_NAME_LEN];
+	unsigned char day, month, year;
+	int score, seconds;
+};
+
+struct vector_d scores_easy, scores_hard;
+
 struct {
 	int life, state, distance, score;
 	float prev_time, time;
 } game_state = { 0 };
 
-draw_ui(width, height, font)
-Font *font;
+char name[MAX_NAME_LEN] = "nome";
+
+/*ordenado por pontuação, data, nome e segundos*/
+sort_scores(x, y)
+void *x, *y;
+{
+	struct score_entry *ptrx;
+	struct score_entry *ptry;
+	int sub;
+	
+	ptrx = (struct score_entry*)x;
+	ptry = (struct score_entry*)y;
+	if ((sub = ptry->score - ptrx->score))
+		return sub;
+	if ((sub = ptry->year - ptrx->year))
+		return sub;
+	if ((sub = ptry->month - ptrx->month))
+		return sub;
+	if ((sub = ptry->day - ptrx->day))
+		return sub;
+	if ((sub = strcmp(ptry->name, ptrx->name)))
+		return sub;
+	if ((sub = ptry->seconds - ptrx->seconds))
+		return sub;
+	return 0;
+}
+
+static void save_score()
+{
+	time_t time_raw;
+	struct score_entry *new_score;
+	struct tm *ptrtime;
+	
+	new_score = (struct score_entry*) LAST_SPACE_LOCAL(scores_easy);
+	scores_easy.nmemb++;
+	strcpy(new_score->name, name);
+	new_score->score = game_state.score;
+	new_score->seconds = DEADLINE_SECS - GetTime() + game_state.time + 3;
+	time(&time_raw);
+	ptrtime = localtime(&time_raw);
+	new_score->day = ptrtime->tm_mday; 
+	new_score->month = ptrtime->tm_mon + 1;
+	new_score->year = ptrtime->tm_year - 100;
+	qsort(scores_easy.base, scores_easy.nmemb, scores_easy.sizememb, sort_scores);
+}
+
+draw_ui(width, height)
 {
 	float now;
 	char time_stamp[8];
@@ -56,10 +116,10 @@ Font *font;
 		now = DEADLINE_SECS + game_state.time;
 		now -= GetTime();
 		sprintf(time_stamp, "%02hhd:%02hhd", (int)(now) / 60, (int)(now) % 60);
-		DrawTextEx(*font, time_stamp, (Vector2){
-				width/2 - MeasureTextEx(*font, time_stamp, font->baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
-				MeasureTextEx(*font, time_stamp, font->baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
-				}, font->baseSize * WIN_MESSAGE_SIZE, SPACING, YELLOW);
+		DrawTextEx(font, time_stamp, (Vector2){
+				width/2 - MeasureTextEx(font, time_stamp, font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
+				MeasureTextEx(font, time_stamp, font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
+				}, font.baseSize * WIN_MESSAGE_SIZE, SPACING, YELLOW);
 	} else if (game_state.state > 0) {
 		now = GetTime();
 		if (game_state.prev_time == 0.0f)
@@ -67,23 +127,23 @@ Font *font;
 		else if (game_state.prev_time + 3.0f <= now) {
 			game_state.score += game_state.life * 20;
 			game_state.score += (DEADLINE_SECS + game_state.time - GetTime()) * 3;
-			printf("%d\n", game_state.score);
+			save_score();
 			return 1;
 		}
-		DrawTextEx(*font, "VOCE VENCEU", (Vector2){
-				width/2 - MeasureTextEx(*font, "VOCE VENCEU", font->baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
-				height/2 - MeasureTextEx(*font, "VOCE VENCEU", font->baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
-				}, font->baseSize * WIN_MESSAGE_SIZE, SPACING, GREEN);
+		DrawTextEx(font, "VOCE VENCEU", (Vector2){
+				width/2 - MeasureTextEx(font, "VOCE VENCEU", font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
+				height/2 - MeasureTextEx(font, "VOCE VENCEU", font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
+				}, font.baseSize * WIN_MESSAGE_SIZE, SPACING, GREEN);
 	} else {
 		now = GetTime();
 		if (game_state.prev_time == 0.0f)
 			game_state.prev_time = now;
 		else if (game_state.prev_time + 3.0f <= now)
 			return 1;
-		DrawTextEx(*font, "VOCE PERDEU", (Vector2){
-				width/2 - MeasureTextEx(*font, "VOCE PERDEU", font->baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
-				height/2 - MeasureTextEx(*font, "VOCE PERDEU", font->baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
-				}, font->baseSize * WIN_MESSAGE_SIZE, SPACING, RED);
+		DrawTextEx(font, "VOCE PERDEU", (Vector2){
+				width/2 - MeasureTextEx(font, "VOCE PERDEU", font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
+				height/2 - MeasureTextEx(font, "VOCE PERDEU", font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
+				}, font.baseSize * WIN_MESSAGE_SIZE, SPACING, RED);
 	}
 	return 0;
 }
@@ -93,16 +153,15 @@ Font *font;
 #define BUTTON_PADDING_SIDES 20
 #define BUTTON_PADDING_VERT 10
 
-draw_menu(width, height, font)
-Font *font;
+draw_menu(width, height)
 {
 	int ret = 0;
 
 	Rectangle rec;
-	GuiSetFont(*font);
-	GuiSetStyle(DEFAULT, TEXT_SIZE, font->baseSize * BUTTON_FONT_SIZE);
-	rec.width = MeasureTextEx(*font, "Jogar", font->baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
-	rec.height = MeasureTextEx(*font, "Jogar", font->baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
+	GuiSetFont(font);
+	GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize * BUTTON_FONT_SIZE);
+	rec.width = MeasureTextEx(font, "Jogar", font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
+	rec.height = MeasureTextEx(font, "Jogar", font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
 	rec.x = (width - rec.width) / 2;
 	rec.y = height / 2 - 150;
 	if (GuiButton(rec, "Jogar"))
@@ -116,6 +175,46 @@ Font *font;
 	return ret;
 }
 
+#define SCORE_SIZE 2
+#define PRINT_BUFFER \
+		DrawTextEx(font, buffer, (Vector2){ \
+				x_left + curr_inc + (inc - MeasureTextEx(font, buffer, font.baseSize * SCORE_SIZE, SPACING).x) / 2, \
+				y_begin \
+				}, font.baseSize * SCORE_SIZE, SPACING, GetColor(GuiGetStyle(STATUSBAR, BASE)));
+
+void draw_scores(v, x_left, x_right, y_begin)
+struct vector_d *v;
+{
+	struct score_entry *ptrsc;
+	char buffer[50];
+	int inc, curr_inc, i;
+
+	for (i=0; i < v->nmemb; i++) {	
+		ptrsc = (struct score_entry*) AT_PTR(v, i);
+		curr_inc = 0;
+		inc = (x_right - x_left) / 16;
+		sprintf(buffer, "%d", ptrsc->score);
+		PRINT_BUFFER
+		curr_inc = (x_right - x_left) / 16;
+
+		inc = (x_right - x_left) / 2;
+		sprintf(buffer, "%s", ptrsc->name);
+		PRINT_BUFFER
+		curr_inc += (x_right - x_left) / 2;
+		
+		inc = (x_right - x_left) / 5;
+		sprintf(buffer, "%02hhd/%02hhd/%02hhd", ptrsc->day, ptrsc->month, ptrsc->year);
+		PRINT_BUFFER
+		curr_inc += (x_right - x_left) / 5;
+		
+		inc = (x_right - x_left) * 0.2375f;
+		sprintf(buffer, "%02hhd:%02hhd", ptrsc->seconds / 60, ptrsc->seconds % 60);
+		PRINT_BUFFER
+		
+		y_begin += MeasureTextEx(font, buffer, font.baseSize * SCORE_SIZE, SPACING).y;
+	}
+}
+
 #define PANEL_MARGIN_OUTSIDE 100
 #define PANEL_MARGIN_INSIDE 20
 #define PANEL_MARGIN_TOP 300
@@ -123,26 +222,26 @@ Font *font;
 #define PANEL_HEADER_SIZE 3
 #define FIRST_COMPONENT_Y 195
 
-draw_play(width, height, font, name)
-Font *font;
-char name[];
+draw_play(width, height)
 {
+	Rectangle rec, input_rec;
 	Vector2 mouse;
 	int ret = 1;
 	bool edit;
 
 	GuiSetStyle(DEFAULT, BACKGROUND_COLOR, 0);
 	GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
-	Rectangle rec, input_rec;
 	rec.width = width / 2 - PANEL_MARGIN_INSIDE - PANEL_MARGIN_OUTSIDE;
 	rec.height = height - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTON;
 	rec.x = PANEL_MARGIN_OUTSIDE;
 	rec.y = PANEL_MARGIN_TOP;
 	GuiPanel(rec, "Facil");
+	draw_scores(&scores_easy, (int)(rec.x), (int)(rec.x + rec.width), (int)(rec.y) + 65);
 	rec.x = width / 2 + PANEL_MARGIN_INSIDE;
 	GuiPanel(rec, "Dificil");
+	draw_scores(&scores_hard, (int)(rec.x), (int)(rec.x + rec.width), (int)(rec.y) + 65);
 	
-	GuiSetStyle(DEFAULT, TEXT_SIZE, font->baseSize * BUTTON_FONT_SIZE);
+	GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize * BUTTON_FONT_SIZE);
 	input_rec.height = 60;
 	input_rec.width = 600;
 	input_rec.x = (width - input_rec.width) / 2; 
@@ -155,14 +254,14 @@ char name[];
 	GuiTextBox(input_rec, name, 30, edit);
 
 	rec.y = (height + rec.y + rec.height) / 2;
-	rec.width = MeasureTextEx(*font, "Voltar", font->baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
-	rec.height = MeasureTextEx(*font, "Voltar", font->baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
+	rec.width = MeasureTextEx(font, "Voltar", font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
+	rec.height = MeasureTextEx(font, "Voltar", font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
 	rec.y -= rec.height / 2;
 	rec.x = width / 2 - rec.width - PANEL_MARGIN_INSIDE;
 	if (GuiButton(rec, "Voltar"))
 		ret = 0;
 
-	rec.width = MeasureTextEx(*font, "Jogar", font->baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
+	rec.width = MeasureTextEx(font, "Jogar", font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
 	rec.x = width / 2 + PANEL_MARGIN_INSIDE;
 	if (GuiButton(rec, "Jogar"))
 		ret = 2; 
@@ -282,8 +381,7 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
 
 static char text_about[] = "Spacecraft eh um jogo de batalha espacial desenvolvido no motor de jogo Raylib.";
 
-draw_about(width, height, font)
-Font *font;
+draw_about(width, height)
 {
 	int ret = 3;
 
@@ -297,11 +395,11 @@ Font *font;
 	GuiPanel(rec, "Sobre o Jogo");
 	rec.y += 65;
 	rec.x += 5;
-	DrawTextBoxedSelectable(*font, text_about, rec, font->baseSize * 4, 1, GetColor(GuiGetStyle(STATUSBAR, BASE)), 0, 0, BLACK, BLACK);
+	DrawTextBoxedSelectable(font, text_about, rec, font.baseSize * 4, 1, GetColor(GuiGetStyle(STATUSBAR, BASE)), 0, 0, BLACK, BLACK);
 	rec.y -= 65;
-	rec.width = MeasureTextEx(*font, "Voltar", font->baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
+	rec.width = MeasureTextEx(font, "Voltar", font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
 	rec.y = (height + rec.y + rec.height) / 2;
-	rec.height = MeasureTextEx(*font, "Voltar", font->baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
+	rec.height = MeasureTextEx(font, "Voltar", font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
 	rec.y -= rec.height / 2;
 	rec.x = (width - rec.width) / 2;
 	if (GuiButton(rec, "Voltar"))

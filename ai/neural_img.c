@@ -304,7 +304,8 @@ void init_random_weights()
 	}
 }
 
-void load_weights(verbose)
+void load_weights(file_name, verbose)
+char file_name[];
 {
 	FILE *fp;
 	int i, j;
@@ -313,9 +314,9 @@ void load_weights(verbose)
 	struct layer *ptrl;
 	
 	if (verbose)
-		puts("Loading weights and biases to the network from: weights...");
-	if (!(fp = fopen("weights", "r"))) {
-		fputs("[load_weights] File weights could not be opened for reading\n", stderr);
+		printf("Loading weights and biases to the network from: %s...", file_name);
+	if (!(fp = fopen(file_name, "r"))) {
+		fprintf(stderr, "[load_weights] File %s could not be opened for reading\n", file_name);
 		return;
 	}
 	if (fscanf(fp, "%x\n", &i) != 1) {
@@ -358,7 +359,8 @@ void load_weights(verbose)
 		puts("Done.");
 }
 
-void save_weights()
+void save_weights(file_name)
+char file_name[];
 {
 	FILE *fp;
 	struct net *ptrn;
@@ -366,7 +368,7 @@ void save_weights()
 	int i, j, k;
 	
 	puts("Saving network weights and biases to: weights...");
-	if (!(fp = fopen("weights", "w"))) {
+	if (!(fp = fopen(file_name, "w"))) {
 		fputs("[save_weights] Could not create network file. Discarding changes made.\n", stderr);
 		return;
 	}

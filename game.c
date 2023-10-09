@@ -18,18 +18,12 @@
 #include <stdio.h>
 #include "raylib.h"
 #include "raymath.h"
-#include "spacecraft.c"
 #include "defs.h"
 #include "ai/neural_img.h"
 #include "ui.c"
+#include "spacecraft.c"
 
 #define PLAY
-
-/*quando abre o jogo, lê o csv*/
-/*termina o jogo, se é vitória grava no ranking*/
-/*fecha o jogo, grava no csv*/
-/*ordenado por pontuação, data e nome*/
-/*nome, 00/00/00, pontuação*/
 
 /* TODO:
  * ranking;
@@ -58,9 +52,7 @@ struct enemy_spacecraft {
 	bool has_penalty;
 #endif
 };
-#ifdef PLAY
-Font font;
-#else
+#ifndef PLAY
 struct enemy_shot {
 	Vector3 position;
 	float state[INPUT_QTT];
@@ -86,6 +78,8 @@ BoundingBox new_spaceship1, new_spaceship2;
 void (*current_screen)();
 bool exit_game = false;
 
+#define WEIGHTS_LOCATION "data/weights"
+
 main(argc, argv)
 char *argv[];
 {
@@ -100,6 +94,8 @@ char *argv[];
 	new_enemy.bullets.last = new_enemy.bullets.first = NULL;
 	new_enemy.bullets.size = 0;
 #ifdef PLAY
+	void load_scores(), save_scores();
+
 	new_enemy.life = 5;
 	game_state.life = MAX_LIFE;
 #else
@@ -129,9 +125,11 @@ char *argv[];
 	screen_width = GetScreenWidth();
 	screen_height = GetScreenHeight();
 #ifdef PLAY
-	ToggleFullscreen();
 	load_map("teste4.map");
 	font = LoadFont("font/setback.png");
+	load_scores();
+	
+	ToggleFullscreen();
 	current_screen = menu;
 #else
 	load_map(argv[1]);
@@ -149,8 +147,10 @@ char *argv[];
 		game();
 #endif
 	CloseWindow();
-#ifndef PLAY
-	save_weights();
+#ifdef PLAY
+	save_scores();
+#else
+	save_weights(WEIGHTS_LOCATION);
 #endif
 }
 
@@ -163,9 +163,72 @@ void *x, *y;
 }
 
 #ifdef PLAY
-char name[20] = "nome";
+void load_scores()
+{
+	struct score_entry *new_score;
+	unsigned char minutes, seconds, easy;
+	char c, *ptrname;
+	FILE *fp;
+	
+	ALLOCATE_LOCAL(scores_easy, sizeof(struct score_entry), 10)
+	ALLOCATE_LOCAL(scores_hard, sizeof(struct score_entry), 10)
+	if ((fp = fopen("data/scores.csv", "r"))) {
+		for (;;) {
+			if (fscanf(fp, "%hhd,", &easy) == EOF)
+				break;
+			if (easy) {
+				new_score = (struct score_entry*) LAST_SPACE_LOCAL(scores_easy);
+				scores_easy.nmemb++;
+			} else {
+				new_score = (struct score_entry*) LAST_SPACE_LOCAL(scores_hard);
+				scores_hard.nmemb++;
+			}
+			fscanf(fp, "%d,", &new_score->score);
+			for (ptrname = new_score->name; (c = fgetc(fp)) != ','; *ptrname++ = c);
+			*ptrname = '\0';
+			fscanf(fp, "%hhd/%hhd/%hhd,%hhd:%hhd\n", &new_score->day, &new_score->month, &new_score->year, &minutes, &seconds);
+			new_score->seconds = seconds;
+			new_score->seconds += minutes * 60;
+		}
+		fclose(fp);
+	}
+}
+
+void save_scores()
+{
+	struct score_entry *new_score;
+	FILE *fp;
+	int i;
+
+	if ((fp = fopen("data/scores.csv", "w"))) {
+		for (i=0; i < scores_easy.nmemb; i++) {
+			new_score = (struct score_entry*) AT(scores_easy, i);
+			fprintf(fp, "%hhd,%d,%s,%hhd/%hhd/%hhd,%hhd:%hhd\n", 1, 
+									     new_score->score,
+									     new_score->name,
+									     new_score->day,
+									     new_score->month,
+									     new_score->year,
+									     new_score->seconds / 60,
+									     new_score->seconds % 60);
+		}
+		for (i=0; i < scores_hard.nmemb; i++) {
+			new_score = (struct score_entry*) AT(scores_hard, i);
+			fprintf(fp, "%hhd,%d,%s,%hhd/%hhd/%hhd,%hhd:%hhd\n", 0, 
+									     new_score->score,
+									     new_score->name,
+									     new_score->day,
+									     new_score->month,
+									     new_score->year,
+									     new_score->seconds / 60,
+									     new_score->seconds % 60);
+		}
+		fclose(fp);
+	}
+}
 
 int screen = 0;
+
 void menu()
 {
 	void game();
@@ -178,12 +241,11 @@ void menu()
 				}, font.baseSize * TITLE_SIZE, SPACING, BLUE);
 		switch (screen) {
 			case 1:
-				screen = draw_play(screen_width, screen_height, &font, name);
+				screen = draw_play(screen_width, screen_height);
 				break;
 			case 2:
 				SetMousePosition(screen_width / 2, screen_height / 2);
 				DisableCursor();
-				current_screen = game;
 
 				camera.position = (Vector3){ 0.0f, 5.0f, 0.0f };
 				camera.target = (Vector3){0.0f, 4.5f,-1.0f };
@@ -201,15 +263,17 @@ void menu()
 				first_enemy = 0;
 				game_state.time = GetTime();
 				
+				current_screen = game;
+				
 				break;
 			case 3:
-				screen = draw_about(screen_width, screen_height, &font);
+				screen = draw_about(screen_width, screen_height);
 				break;
 			case 4:
 				exit_game = true;
 				break;
 			default:
-				screen = draw_menu(screen_width, screen_height, &font);
+				screen = draw_menu(screen_width, screen_height);
 				break;
 		}
 	EndDrawing();	
@@ -274,8 +338,8 @@ struct create_network nets[] = {{layers1, sizeof(layers1)/sizeof(unsigned), INPU
 void init_network()
 {
 	init_net_topology(nets, 1, 1);
-	if (FileExists("weights"))
-		load_weights(1);
+	if (FileExists(WEIGHTS_LOCATION))
+		load_weights(WEIGHTS_LOCATION, 1);
 	else
 		init_random_weights();
 }

@@ -15,6 +15,9 @@
   You should have received a copy of the GNU General Public License along
   with this program; If not, see <http://www.gnu.org/licenses/>
 */
+#ifndef LINKED_LIST_INCLUDED
+#define LINKED_LIST_INCLUDED
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -90,3 +93,4 @@ struct list *l;
 			return 1;
 	return 0;
 }
+#endif

@@ -85,12 +85,12 @@ void init_random_weights();
  * 	Reads `weights` file and loads the network.
  * 	If 'verbose', displays messages indicating the start and end.
  * */
-void load_weights(int verbose);
+void load_weights(char file_name[], int verbose);
 
 /* save_weights:
- * 	Writes in `weights` file the network.
+ * 	Writes in file_name the network.
  * */
-void save_weights();
+void save_weights(char file_name[]);
 
 /* run:
  * 	Computes feedforward using 'img_view' and 'network_output' receives the output of the network.
