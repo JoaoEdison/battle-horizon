@@ -19,6 +19,7 @@
 #define MAX_DIST 120.0f
 #define ARRIVAL_DIST (MAX_DIST*10)
 #define DIAGONAL_MAP 1247.076f
+#define CORNER (MAX_DIST - 20.0f)
 /*player*/
 #define SPACECRAFT_SPEED 20.0f
 #define SPACECRAFT_SPEED_MAX 50.0f
