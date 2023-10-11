@@ -23,7 +23,6 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.c"
 
-#define MAX_LIFE 5
 #define STEP_SIZE 100
 #define PADDING 6
 #define WIDTH_LIFE 20
@@ -33,6 +32,7 @@
 #define MAX_NAME_LEN 20
 
 Font font;
+Sound ui_sound;
 
 struct score_entry {
 	char name[MAX_NAME_LEN];
@@ -155,8 +155,9 @@ draw_ui(width, height)
 
 draw_menu(width, height)
 {
-	int ret = 0;
-
+	int ret;
+       
+	ret = 0;
 	Rectangle rec;
 	GuiSetFont(font);
 	GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize * BUTTON_FONT_SIZE);
@@ -172,6 +173,8 @@ draw_menu(width, height)
 	rec.y += 100;
 	if (GuiButton(rec, "Sair"))
 		ret = 4;
+	if (ret)
+		PlaySound(ui_sound);
 	return ret;
 }
 
@@ -226,9 +229,10 @@ draw_play(width, height)
 {
 	Rectangle rec, input_rec;
 	Vector2 mouse;
-	int ret = 1;
+	int ret;
 	bool edit;
-
+	
+	ret = 1;
 	GuiSetStyle(DEFAULT, BACKGROUND_COLOR, 0);
 	GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 	rec.width = width / 2 - PANEL_MARGIN_INSIDE - PANEL_MARGIN_OUTSIDE;
@@ -264,7 +268,9 @@ draw_play(width, height)
 	rec.width = MeasureTextEx(font, "Jogar", font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
 	rec.x = width / 2 + PANEL_MARGIN_INSIDE;
 	if (GuiButton(rec, "Jogar"))
-		ret = 2; 
+		ret = 2;
+	if (ret != 1)
+		PlaySound(ui_sound);
 	return ret;
 }
 
@@ -383,8 +389,9 @@ static char text_about[] = "Spacecraft eh um jogo de batalha espacial desenvolvi
 
 draw_about(width, height)
 {
-	int ret = 3;
-
+	int ret;
+	
+	ret = 3;
 	GuiSetStyle(DEFAULT, BACKGROUND_COLOR, 0);
 	GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 	Rectangle rec;
@@ -404,5 +411,7 @@ draw_about(width, height)
 	rec.x = (width - rec.width) / 2;
 	if (GuiButton(rec, "Voltar"))
 		ret = 0;
+	if (!ret)
+		PlaySound(ui_sound);
 	return ret;
 }

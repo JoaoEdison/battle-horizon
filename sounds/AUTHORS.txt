@@ -1,0 +1,19 @@
+enemy-destroyed,
+enemy-shot,
+laser-gun,
+lost,
+win,
+speeding-up: https://pixabay.com/users/1/?tab=sound-effects&order=latest&pagi=1
+
+ui: https://freesound.org/people/MATRIXXX_/
+
+hit-rock-spacecraft: https://freesound.org/people/waveplaySFX/
+
+hit-player: https://freesound.org/people/MountLava/
+
+hit-rock-enemy-shot,
+hit-rock-player-shot,
+hit-enemy,
+hit-rock: https://freesound.org/people/unfa/
+
+hit-rock-enemy-spacecraft: https://freesound.org/people/wildweasel/

@@ -26,7 +26,6 @@
 #define PLAY
 
 /* TODO:
- * sons;
  * texturas;
  * municao.
  * */
@@ -72,6 +71,15 @@ BoundingBox new_spaceship1, new_spaceship2;
 void (*current_screen)();
 bool exit_game = false;
 
+struct sound_I {
+	Sound sound;
+	float P;
+} destroyed_sound, enemy_shot_sound, \
+  hit_rock_player_shot, hit_rock_enemy_shot,
+  hit_enemy, hit_rock_enemy_spacecraft;
+
+Sound shot_sound, victory_sound, defeat_sound, hit_player, collision_sound;
+
 #define WEIGHTS_LOCATION "data/weights"
 
 main(argc, argv)
@@ -82,7 +90,7 @@ char *argv[];
 #ifdef PLAY
 	void load_scores(), save_scores();
 
-	new_enemy.life = 5;
+	new_enemy.life = ENEMY_LIFE;
 	game_state.life = MAX_LIFE;
 #endif
 	new_enemy.color = GRAY;
@@ -113,11 +121,36 @@ char *argv[];
 	InitWindow(0, 0, "Batalha Espacial");
 	screen_width = GetScreenWidth();
 	screen_height = GetScreenHeight();
+	
+	InitAudioDevice();
+	ui_sound = LoadSound("sounds/ui.wav");
+	SetSoundVolume(ui_sound, 2.0f);
+	shot_sound = LoadSound("sounds/laser3.mp3");
+	SetSoundVolume(shot_sound, 0.08f);
+	collision_sound = LoadSound("sounds/hit-rock-spacecraft.wav");
+	SetSoundVolume(collision_sound, 0.2f);
+	victory_sound = LoadSound("sounds/win.mp3");
+	defeat_sound = LoadSound("sounds/lost.mp3");
+	SetSoundVolume(defeat_sound, 0.5f);
+	hit_player = LoadSound("sounds/hit-player.wav");
+	SetSoundVolume(hit_player, 0.2f);
+	
+	hit_enemy.sound = LoadSound("sounds/hit-enemy.mp3");
+	hit_enemy.P = 300.0f;
+	hit_rock_player_shot.sound = LoadSound("sounds/hit-rock-player-shot.mp3");
+	hit_rock_player_shot.P = 300.0f;
+	hit_rock_enemy_shot.sound = LoadSound("sounds/hit-rock-enemy-shot.mp3");
+	hit_rock_enemy_shot.P = 150.0f;
+	hit_rock_enemy_spacecraft.sound = LoadSound("sounds/hit-rock-enemy-spacecraft.wav");
+	hit_rock_enemy_spacecraft.P = 24.0f;
+	enemy_shot_sound.sound = LoadSound("sounds/enemy-shot.mp3");
+	enemy_shot_sound.P = 24.0f;
+	destroyed_sound.sound = LoadSound("sounds/enemy-destroyed.mp3");
+	destroyed_sound.P = 24.0f;
 #ifdef PLAY
 	load_map("teste4.map");
 	font = LoadFont("font/setback.png");
 	load_scores();
-	
 	ToggleFullscreen();
 	current_screen = menu;
 #else
@@ -128,7 +161,6 @@ char *argv[];
 	SetTargetFPS(60);
 
 	mod_spaceship = LoadModel("models/spacecraft.glb");
-
 #ifdef PLAY
 	while (!WindowShouldClose() && !exit_game)
 		current_screen();
@@ -137,6 +169,19 @@ char *argv[];
 		game();
 #endif
 	CloseWindow();
+	UnloadSound(hit_rock_enemy_spacecraft.sound);
+	UnloadSound(hit_rock_enemy_shot.sound);
+	UnloadSound(hit_rock_player_shot.sound);
+	UnloadSound(hit_player);
+	UnloadSound(hit_enemy.sound);
+	UnloadSound(shot_sound);
+	UnloadSound(enemy_shot_sound.sound);
+	UnloadSound(destroyed_sound.sound);
+	UnloadSound(collision_sound);
+	UnloadSound(victory_sound);
+	UnloadSound(defeat_sound);
+	UnloadSound(ui_sound);
+	CloseAudioDevice();	
 #ifdef PLAY
 	save_scores();
 #else
@@ -243,7 +288,7 @@ void menu()
 				game_state.life = MAX_LIFE;
 				game_state.state = 0;
 				game_state.prev_time = 0.0f;
-				game_state.score = 0;
+				game_state.score = total_enemies * ENEMY_LIFE * SCORE_PER_SHOT * 2;
 				while (following.first) {
 					while (((struct enemy_spacecraft*)following.first->data)->bullets.first)
 						list_remove(((struct enemy_spacecraft*)following.first->data)->bullets.first,
@@ -252,9 +297,7 @@ void menu()
 				}
 				first_enemy = 0;
 				game_state.time = GetTime();
-				
 				current_screen = game;
-				
 				break;
 			case 3:
 				screen = draw_about(screen_width, screen_height);
@@ -283,10 +326,16 @@ void game()
 	manage_enemies();
 #ifdef PLAY
 	if (!game_state.state) {
-		if (-camera.target.z > ARRIVAL_DIST)
-			game_state.state = GetTime() - game_state.time >= DEADLINE_SECS-1.0f || following.size? -1 : 1;
-		if (!game_state.life)
+		if (GetTime() - game_state.time >= DEADLINE_SECS-1.0f)
 			game_state.state = -1;
+		if (-camera.target.z > ARRIVAL_DIST)
+			game_state.state = following.size? -1 : 1;
+		else if (!game_state.life)
+			game_state.state = -1;
+		if (game_state.state == -1)
+			PlaySound(defeat_sound);
+		else if (game_state.state == 1)
+			PlaySound(victory_sound);
 	}
 	game_state.distance = -camera.target.z;
 #endif
@@ -377,6 +426,13 @@ char name[];
 	qsort(enemies, total_enemies, sizeof(struct model), sort_by_dist);
 }
 
+#define SPACESHIP_POS camera.target.x, camera.target.y - 1.8f, camera.target.z + 0.5f
+#define PLAY_SOUND_BY_DIST(POINT, SOUND) \
+			float I = Vector3Distance(POINT, (Vector3){SPACESHIP_POS}); \
+			I *= 2; \
+			I = SOUND.P / I; \
+			SetSoundVolume(SOUND.sound, I); \
+			PlaySound(SOUND.sound);
 void manage_player()
 {
 	static Matrix pos_spaceship;
@@ -400,8 +456,7 @@ void manage_player()
 
 	pos_spaceship = MatrixMultiply(MatrixMultiply(MatrixScale(1.5f, 1.5f, 1.5f),
 					MatrixRotate((Vector3){0.0f, 1.0f, 0.0f}, 1.57f)),
-			MatrixTranslate(camera.target.x, camera.target.y - 1.8f,
-				camera.target.z + 0.5f));
+			MatrixTranslate(SPACESHIP_POS));
 	mod_spaceship.transform = pos_spaceship;
 	new_spaceship1.min = Vector3Transform(box_spaceship1.min, pos_spaceship);
 	new_spaceship1.max = Vector3Transform(box_spaceship1.max, pos_spaceship);
@@ -410,6 +465,7 @@ void manage_player()
 	/*player collision with meteors*/
 	collision = collision_spacecraft_rocks();
 	if (collision && !prev_collision) {
+		PlaySound(collision_sound);
 		prev_collision = true;
 		game_state.life--;
 	}
@@ -420,6 +476,7 @@ void manage_player()
 		ptrbul = (Vector3*)next->data;
 		/*bullets collisions*/
 		if (collision_bullet_rocks(ptrbul)) {
+			PLAY_SOUND_BY_DIST(*ptrbul, hit_rock_player_shot)
 			curr = next;
 			next = next->next;
 			list_remove(curr, &shots);
@@ -439,10 +496,11 @@ void manage_player()
 			((struct enemy_spacecraft*)ptre->data)->last_shooted_penalty = now;
 		}
 		if (collision_bullet_enemies(ptrbul, &ptre)) {
-			if (now - ((struct enemy_spacecraft*)ptre->data)->last_shooted > 0.5f) {
-				((struct enemy_spacecraft*)ptre->data)->last_shooted = now;
-				if (--((struct enemy_spacecraft*)ptre->data)->life == 0)
-					list_remove(ptre, &following);
+			PLAY_SOUND_BY_DIST(*ptrbul, hit_enemy)
+			((struct enemy_spacecraft*)ptre->data)->last_shooted = now;
+			if (--((struct enemy_spacecraft*)ptre->data)->life == 0) {
+				PLAY_SOUND_BY_DIST(((struct enemy_spacecraft*)ptre->data)->shape.position, destroyed_sound)	
+				list_remove(ptre, &following);
 			}
 			curr = next;
 			next = next->next;
@@ -473,7 +531,8 @@ void manage_player()
 		list_insert(&new_bullet, &shots, sizeof(Vector3));
 		prev_time = GetTime();
 #ifdef PLAY
-		game_state.score -= 2;
+		game_state.score -= SCORE_PER_SHOT;
+		PlaySound(shot_sound);
 #endif
 	}
 }
@@ -596,7 +655,9 @@ void manage_enemies()
 		}
 		// enemy meteor collision
 		if (collision_enemy_rocks(ptrenemy) && now - ptrenemy->last_meteor > 0.5f) {
+			PLAY_SOUND_BY_DIST(ptrenemy->shape.position, hit_rock_enemy_spacecraft)
 			if (--ptrenemy->life == 0) {
+				PLAY_SOUND_BY_DIST(ptrenemy->shape.position, destroyed_sound)
 				curr = next_enemy;
 				next_enemy = next_enemy->next;
 				list_remove(curr, &following);
@@ -621,6 +682,7 @@ void manage_enemies()
 			ptrbullet = (struct enemy_shot*)next->data;
 			// enemy bullet collision
 			if (collision_bullet_rocks(&ptrbullet->position)) {
+				PLAY_SOUND_BY_DIST(ptrbullet->position, hit_rock_enemy_shot)
 				for (i=0; i < MAX_CLASSES; i++)
 					current_error.y[i] = 0.0f;
 				current_error.y[GetRandomValue(0,3)] = 1.0f;
@@ -635,6 +697,7 @@ void manage_enemies()
 			// hit the player
 			if (collision_bullet_player(&ptrbullet->position)) {
 #ifdef PLAY
+				PlaySound(hit_player);
 				--game_state.life;
 #endif
 				for (i=0; i < MAX_CLASSES; i++)
@@ -776,8 +839,9 @@ void manage_enemies()
 				new_shot.position = ptrenemy->shape.position;
 				new_shot.position.z += 2.0f;
 				for (i=0; i < INPUT_QTT; i++)
-					new_shot.state[i] = ptrenemy->last_state[i];	
+					new_shot.state[i] = ptrenemy->last_state[i];
 				list_insert(&new_shot, &ptrenemy->bullets, sizeof(struct enemy_shot));
+				PLAY_SOUND_BY_DIST(new_shot.position, enemy_shot_sound);
 			}
 		} else if (now - ptrenemy->last_shoot > 1.0f) {
 			ptrenemy->penalties.dont_shoot = 1;
