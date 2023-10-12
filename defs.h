@@ -40,3 +40,5 @@
 #define ENEMY_LIFE 4
 /*score*/
 #define SCORE_PER_SHOT 2
+#define SCORE_PER_SECOND 4
+#define SCORE_PER_LIFE 30

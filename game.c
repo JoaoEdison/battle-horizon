@@ -26,15 +26,16 @@
 #define PLAY
 
 /* TODO:
- * texturas;
- * municao.
+ * luz;
+ * municao;
+ * arrumar alguns erros.
  * */
 
 struct enemy_spacecraft {
 	struct model shape;
 	float dist;
 	struct list bullets;
-	float last_shoot, last_meteor_penalty, last_meteor, last_shooted, last_shooted_penalty;
+	float last_shoot, last_meteor_penalty, last_meteor, last_shooted_penalty;
 	Color color;
 	int life;
 	float last_state[INPUT_QTT], last_move, last_far;
@@ -74,7 +75,7 @@ bool exit_game = false;
 struct sound_I {
 	Sound sound;
 	float P;
-} destroyed_sound, enemy_shot_sound, \
+} destroyed_sound, enemy_shot_sound,
   hit_rock_player_shot, hit_rock_enemy_shot,
   hit_enemy, hit_rock_enemy_spacecraft;
 
@@ -93,8 +94,7 @@ char *argv[];
 	new_enemy.life = ENEMY_LIFE;
 	game_state.life = MAX_LIFE;
 #endif
-	new_enemy.color = GRAY;
-	new_enemy.last_shooted = 0.0f;
+	new_enemy.color = WHITE;
 	new_enemy.last_meteor_penalty = new_enemy.last_shooted_penalty = 0.0f;
 	new_enemy.last_meteor = new_enemy.last_shoot = 0.0f;
 	new_enemy.bullets.last = new_enemy.bullets.first = NULL;
@@ -133,20 +133,20 @@ char *argv[];
 	defeat_sound = LoadSound("sounds/lost.mp3");
 	SetSoundVolume(defeat_sound, 0.5f);
 	hit_player = LoadSound("sounds/hit-player.wav");
-	SetSoundVolume(hit_player, 0.2f);
+	SetSoundVolume(hit_player, 0.15f);
 	
 	hit_enemy.sound = LoadSound("sounds/hit-enemy.mp3");
-	hit_enemy.P = 300.0f;
+	hit_enemy.P = 150.0f;
 	hit_rock_player_shot.sound = LoadSound("sounds/hit-rock-player-shot.mp3");
-	hit_rock_player_shot.P = 300.0f;
+	hit_rock_player_shot.P = 150.0f;
 	hit_rock_enemy_shot.sound = LoadSound("sounds/hit-rock-enemy-shot.mp3");
-	hit_rock_enemy_shot.P = 150.0f;
+	hit_rock_enemy_shot.P = 75.0f;
 	hit_rock_enemy_spacecraft.sound = LoadSound("sounds/hit-rock-enemy-spacecraft.wav");
-	hit_rock_enemy_spacecraft.P = 24.0f;
+	hit_rock_enemy_spacecraft.P = 12.0f;
 	enemy_shot_sound.sound = LoadSound("sounds/enemy-shot.mp3");
-	enemy_shot_sound.P = 24.0f;
+	enemy_shot_sound.P = 12.0f;
 	destroyed_sound.sound = LoadSound("sounds/enemy-destroyed.mp3");
-	destroyed_sound.P = 24.0f;
+	destroyed_sound.P = 12.0f;
 #ifdef PLAY
 	load_map("teste4.map");
 	font = LoadFont("font/setback.png");
@@ -354,7 +354,7 @@ void game()
 		prev_back = GetTime();
 	}
 	BeginDrawing();
-		ClearBackground(RAYWHITE);
+		ClearBackground(BLACK);
 		BeginMode3D(camera);
 			draw_scene();
 		EndMode3D();
@@ -394,6 +394,9 @@ char name[];
 	for (i=0; i < model_count; i++) {
 		fscanf(fp, "%s %hd\n", models[i].pathname, &j);
 		models[i].drawing = LoadModel(models[i].pathname);
+		fscanf(fp, "%hhd %s\n", &models[i].has_texture, models[i].texturepath);
+		if (models[i].has_texture)
+			models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
 		if (strstr(models[i].pathname, "enemy"))
 			enemy_idx = i;
 		models[i].collision_list.first = NULL;
@@ -428,9 +431,7 @@ char name[];
 
 #define SPACESHIP_POS camera.target.x, camera.target.y - 1.8f, camera.target.z + 0.5f
 #define PLAY_SOUND_BY_DIST(POINT, SOUND) \
-			float I = Vector3Distance(POINT, (Vector3){SPACESHIP_POS}); \
-			I *= 2; \
-			I = SOUND.P / I; \
+			float I = SOUND.P / Vector3Distance(POINT, (Vector3){SPACESHIP_POS}); \
 			SetSoundVolume(SOUND.sound, I); \
 			PlaySound(SOUND.sound);
 void manage_player()
@@ -497,7 +498,6 @@ void manage_player()
 		}
 		if (collision_bullet_enemies(ptrbul, &ptre)) {
 			PLAY_SOUND_BY_DIST(*ptrbul, hit_enemy)
-			((struct enemy_spacecraft*)ptre->data)->last_shooted = now;
 			if (--((struct enemy_spacecraft*)ptre->data)->life == 0) {
 				PLAY_SOUND_BY_DIST(((struct enemy_spacecraft*)ptre->data)->shape.position, destroyed_sound)	
 				list_remove(ptre, &following);
@@ -667,9 +667,8 @@ void manage_enemies()
 		}
 		// enemy away from player or in the corners
 		now = GetTime();
-		if ((Vector3Distance(ptrenemy->shape.position,
-				   (Vector3){camera.target.x, camera.target.y - 1.8f, camera.target.z + 0.5f}
-				   ) > ptrenemy->dist + LIMIT_DISTANCE_TO_PLAYER ||
+		if ((Vector3Distance(ptrenemy->shape.position, (Vector3){SPACESHIP_POS}) > 
+		     ptrenemy->dist + LIMIT_DISTANCE_TO_PLAYER ||
 		    fabs(ptrenemy->shape.position.x) > CORNER ||
 		    fabs(ptrenemy->shape.position.y > CORNER)
 		    ) && now - ptrenemy->last_far > 2.0f) {
@@ -776,7 +775,7 @@ void manage_enemies()
 		curr_state[8] = (camera.target.y - 1.8f) / MAX_DIST;
 		curr_state[9] = (ARRIVAL_DIST / 2 + camera.target.z + 0.5f) / (-ARRIVAL_DIST / 2);
 		curr_state[3] = Vector3Distance(ptrenemy->shape.position,
-					       (Vector3){camera.target.x, camera.target.y - 1.8f, camera.target.z + 0.5f}) / DIAGONAL_MAP;
+					       (Vector3){SPACESHIP_POS}) / DIAGONAL_MAP;
 		curr_state[10] = DIAGONAL_MAP;
 		for (curr = shots.first; curr; curr = curr->next) {
 			aux = Vector3Distance(ptrenemy->shape.position, *(Vector3*)curr->data);
@@ -896,7 +895,7 @@ void draw_scene()
 				position,
 				draw_model->angles,
 				draw_model->scale,
-				GRAY);
+				WHITE);
 	}
 	for (next = following.first; next; next = next->next) {
 		draw_model = &((struct enemy_spacecraft*)next->data)->shape;
@@ -915,14 +914,14 @@ void draw_scene()
 				4, 4,
 				BLACK);
 		DrawLine3D(draw_model->position,
-			  (Vector3){camera.target.x, camera.target.y - 1.8f, camera.target.z + 0.5f}, 
+			  (Vector3){SPACESHIP_POS}, 
 			  Vector3Distance(draw_model->position, 
-				          (Vector3){camera.target.x, camera.target.y - 1.8f, camera.target.z + 0.5f}) >
+				          (Vector3){SPACESHIP_POS}) >
 			                  ((struct enemy_spacecraft*)next->data)->dist + LIMIT_DISTANCE_TO_PLAYER? RED : BLUE);
 #endif
 	}
 	DrawSphere((Vector3){camera.position.x+250.0f, camera.position.y+150.0f, camera.position.z-700.0f}, 100.0f, YELLOW);
-	DrawModel(mod_spaceship, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, RED);
+	DrawModel(mod_spaceship, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
 	for (next = shots.first; next; next = next->next) {
 		aux_bullet = new_bullet = *(Vector3*)next->data;
 		new_bullet.z += .2f;

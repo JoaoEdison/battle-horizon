@@ -3421,8 +3421,6 @@ void DrawModel(Model model, Vector3 position, float scale, Color tint)
     DrawModelEx(model, position, rotationAxis, 0.0f, vScale, tint);
 }
 
-
-
 void DrawModelRotate(Model model, Vector3 position, Vector3 rotationAngle, float scale, Color tint)
 {
     Matrix matScale = MatrixScale(scale, scale, scale);
@@ -3451,8 +3449,6 @@ void DrawModelRotate(Model model, Vector3 position, Vector3 rotationAngle, float
         model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color = color;
     }
 }
-
-
 
 // Draw a model with extended parameters
 void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)

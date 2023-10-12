@@ -19,7 +19,7 @@
 #include <raymath.h>
 #include "linked_list.c"
 
-#define MAX_MAP_NAME_LEN 40
+#define MAX_MAP_NAME_LEN 60
 
 struct model {
 	unsigned char model;
@@ -28,8 +28,10 @@ struct model {
 };
 
 struct models_with_collisions {
-	char pathname[MAX_MAP_NAME_LEN];
 	Model drawing;
+	char pathname[MAX_MAP_NAME_LEN];
+	char texturepath[MAX_MAP_NAME_LEN];
+	unsigned char has_texture;
 	struct list collision_list;
 };
 

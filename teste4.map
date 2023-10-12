@@ -1,12 +1,16 @@
 4
 models/rock1.glb 1
+1 models/black-white-details-moon-texture.png
 0.0000 0.0000 0.0000 1.0000
 models/rock2.glb 2
+1 models/black-stone-texture.png
 -0.2000 0.4000 0.2000 0.8000
 0.2000 -0.2000 0.0000 0.9000
 models/rock3.glb 1
+1 models/old-wall-texture.png
 0.0000 0.0000 0.0000 1.0000
 models/enemy.glb 7
+0 0
 0.0000 0.0000 0.0000 1.5000
 2.3000 0.0000 0.0000 1.1000
 -2.3000 0.0000 0.0000 1.1000

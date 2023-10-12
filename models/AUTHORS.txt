@@ -1,0 +1,8 @@
+Textures used on asteroids:
+
+rock1:
+https://www.freepik.com/free-photo/black-white-details-moon-texture-concept_29662096.htm#query=asteroid%20texture&position=16&from_view=keyword&track=ais
+rock2: kues1
+https://www.freepik.com/free-photo/black-stone-texture_1034310.htm#query=asteroid%20texture&position=1&from_view=keyword&track=ais
+rock3: efe_madrid
+https://www.freepik.com/free-photo/old-wall-texture_6029336.htm#query=asteroid%20texture&position=36&from_view=keyword&track=ais

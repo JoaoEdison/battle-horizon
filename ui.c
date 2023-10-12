@@ -125,8 +125,8 @@ draw_ui(width, height)
 		if (game_state.prev_time == 0.0f)
 			game_state.prev_time = now;
 		else if (game_state.prev_time + 3.0f <= now) {
-			game_state.score += game_state.life * 20;
-			game_state.score += (DEADLINE_SECS + game_state.time - GetTime()) * 3;
+			game_state.score += game_state.life * SCORE_PER_LIFE;
+			game_state.score += (DEADLINE_SECS + game_state.time - GetTime()) * SCORE_PER_SECOND;
 			save_score();
 			return 1;
 		}

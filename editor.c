@@ -37,38 +37,54 @@ short model_count;
 void load_models()
 {
 	struct model new_box = { 0 };
-
-	strcpy(models[0].pathname, "models/rock1.glb");
-	models[0].drawing = LoadModel(models[0].pathname);
-	models[0].collision_list.first = NULL;
-	models[0].collision_list.size = 0;
+	int i;
+	
+	i = 0;
+	strcpy(models[i].pathname, "models/rock1.glb");
+	models[i].drawing = LoadModel(models[i].pathname);
+	strcpy(models[i].texturepath, "models/black-white-details-moon-texture.png");
+	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
+	models[i].has_texture = 1;
+	models[i].collision_list.first = NULL;
+	models[i].collision_list.size = 0;
 	new_box.scale = 1.0f;
 	new_box.position = (Vector3){ 0 };
-	list_insert(&new_box, &models[0].collision_list, sizeof(struct model));
-
-	strcpy(models[1].pathname, "models/rock2.glb");
-	models[1].drawing = LoadModel(models[1].pathname);
-	models[1].collision_list.first = NULL;
-	models[1].collision_list.size = 0;
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	
+	i++;
+	strcpy(models[i].pathname, "models/rock2.glb");
+	models[i].drawing = LoadModel(models[i].pathname);
+	strcpy(models[i].texturepath, "models/black-stone-texture.png");
+	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
+	models[i].has_texture = true;
+	models[i].collision_list.first = NULL;
+	models[i].collision_list.size = 0;
 	new_box.scale = .8f;
 	new_box.position = (Vector3){ -.2f, .4f, .2f };
-	list_insert(&new_box, &models[1].collision_list, sizeof(struct model));
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	new_box.scale = .9f;
 	new_box.position = (Vector3){ .2f, -.2f, .0f };
-	list_insert(&new_box, &models[1].collision_list, sizeof(struct model));
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 
-	strcpy(models[2].pathname, "models/rock3.glb");
-	models[2].drawing = LoadModel(models[2].pathname);
-	models[2].collision_list.first = NULL;
-	models[2].collision_list.size = 0;
+	i++;
+	strcpy(models[i].pathname, "models/rock3.glb");
+	models[i].drawing = LoadModel(models[i].pathname);
+	strcpy(models[i].texturepath, "models/old-wall-texture.png");
+	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
+	models[i].has_texture = 1;
+	models[i].collision_list.first = NULL;
+	models[i].collision_list.size = 0;
 	new_box.scale = 1.0f;
 	new_box.position = (Vector3){ 0 };
-	list_insert(&new_box, &models[2].collision_list, sizeof(struct model));
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 
-	strcpy(models[3].pathname, "models/enemy.glb");
-	models[3].drawing = LoadModel(models[3].pathname);
-	models[3].collision_list.first = NULL;
-	models[3].collision_list.size = 0;
+	i++;
+	strcpy(models[i].pathname, "models/enemy.glb");
+	models[i].drawing = LoadModel(models[i].pathname);
+	strcpy(models[i].texturepath, "0");
+	models[i].has_texture = 0;
+	models[i].collision_list.first = NULL;
+	models[i].collision_list.size = 0;
 	new_box.scale = 1.5f;
 	new_box.position = (Vector3){ 0 };
 	list_insert(&new_box, &models[3].collision_list, sizeof(struct model));
@@ -379,6 +395,7 @@ char *name;
 	for (next1 = present.first; next1; next1 = next1->next) {
 		i = *(short*)next1->data;
 		fprintf(fp, "%s %hd\n", models[i].pathname, models[i].collision_list.size);
+		fprintf(fp, "%hhd %s\n", models[i].has_texture, models[i].texturepath);
 		for (next2 = models[i].collision_list.first; next2; next2 = next2->next) {
 			current = (struct model*)next2->data;
 			fprintf(fp, "%.4f %.4f %.4f %.4f\n",
@@ -409,10 +426,11 @@ void open_map(name)
 char name[];
 {
 	struct model new;
-	char model_name[MAX_MAP_NAME_LEN];
+	char model_name[MAX_MAP_NAME_LEN], texture_name[MAX_MAP_NAME_LEN];
+	FILE *fp;
 	short map[MAX_MODELS];
 	short i, j, k, total_models;
-	FILE *fp;
+	unsigned char has_texture;
 	
 	for (i = 0; i < MAX_MODELS; i++)
 		map[i] = -1;	
@@ -425,6 +443,7 @@ char name[];
 				map[i] = j;
 				break;
 			}
+		fscanf(fp, "%hhd %s\n", &has_texture, texture_name);
 		while (k--)
 			while (fgetc(fp) != '\n');
 	}
