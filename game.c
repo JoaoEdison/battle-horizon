@@ -29,15 +29,16 @@
 
 /* TODO:
  * hard level;
- * light;
  * ammunition;
  * fix errors.
  * */
 
+/*quando um inimigo eh destruido, suas balas devem permanecer no mapa!!!*/
+/*mas e a retropropagação???*/
+
 struct enemy_spacecraft {
 	struct model shape;
 	float dist;
-	struct list bullets;
 	float last_shoot, last_meteor_penalty, last_meteor, last_shooted_penalty;
 	Color color;
 	int life;
@@ -51,8 +52,13 @@ struct enemy_spacecraft {
 	bool has_penalty;
 };
 
-struct enemy_shot {
+struct shot {
 	Vector3 position;
+	short light_idx;
+};
+
+struct enemy_shot {
+	struct shot properties;
 	float state[INPUT_QTT];
 };
 
@@ -66,6 +72,7 @@ short model_count;
 struct list rocks = { 0 };
 struct list following = { 0 };
 struct list shots = { 0 };
+struct list enemy_bullets = { 0 };
 struct enemy_spacecraft new_enemy;
 
 int screen_width, screen_height;
@@ -87,6 +94,9 @@ Sound shot_sound, victory_sound, defeat_sound, hit_player, collision_sound;
 #define WEIGHTS_LOCATION "data/weights"
 
 Shader shader;
+Light lights[MAX_LIGHTS];
+
+#define MODEL_COLOR WHITE
 
 #define SUN_X   250.0f
 #define SUN_Y   150.0f
@@ -103,11 +113,9 @@ char *argv[];
 	new_enemy.life = ENEMY_LIFE;
 	game_state.life = MAX_LIFE;
 #endif
-	new_enemy.color = WHITE;
+	new_enemy.color = MODEL_COLOR;
 	new_enemy.last_meteor_penalty = new_enemy.last_shooted_penalty = 0.0f;
 	new_enemy.last_meteor = new_enemy.last_shoot = 0.0f;
-	new_enemy.bullets.last = new_enemy.bullets.first = NULL;
-	new_enemy.bullets.size = 0;
 	new_enemy.penalties.faraway = 0;	
 	new_enemy.penalties.dont_move = 0;
 	new_enemy.last_far = new_enemy.last_move = 0.0f;
@@ -161,13 +169,15 @@ char *argv[];
 	//shaders
 	shader = LoadShader("shaders/lighting.vs", "shaders/lighting.fs");
 	shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-//	int ambientLoc = GetShaderLocation(shader, "ambient");
-//	SetShaderValue(shader, ambientLoc, (float[4]){0.1f, 0.1f, 0.1f, 1.0f}, SHADER_UNIFORM_VEC4);
+	//int ambientLoc = GetShaderLocation(shader, "ambient");
+	//SetShaderValue(shader, ambientLoc, (float[4]){0.1f, 0.1f, 0.1f, 1.0f}, SHADER_UNIFORM_VEC4);
 	for (i=0; i < mod_spaceship.materialCount; i++)
 		mod_spaceship.materials[i].shader = shader;
-	
+	// create directional light facing 0,0,0	
 	CreateLight(LIGHT_DIRECTIONAL, (Vector3){SUN_X, SUN_Y, SUN_Z}, Vector3Zero(), WHITE, shader);
-
+	// create all possible lights in sun
+	for (i=1; i < MAX_LIGHTS; i++)
+		lights[i] = CreateLight(LIGHT_POINT, (Vector3){SUN_X, SUN_Y, SUN_Z}, Vector3Zero(), WHITE, shader);
 	SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], (float[3]){SUN_X, SUN_Y, SUN_Z}, SHADER_UNIFORM_VEC3);
 
 	SetTargetFPS(60);
@@ -218,6 +228,11 @@ void *x, *y;
 {
 	return ((struct model*)y)->position.z - ((struct model*)x)->position.z;
 }
+
+#define MOVE_LIGHT_SUN(IDX) \
+		lights[IDX].position = (Vector3){SUN_X, SUN_Y, SUN_Z}; \
+		lights[IDX].color = WHITE; \
+		UpdateLightValues(shader, lights[IDX]);
 
 #ifdef PLAY
 void load_scores()
@@ -311,11 +326,15 @@ void menu()
 				game_state.state = 0;
 				game_state.prev_time = 0.0f;
 				game_state.score = total_enemies * ENEMY_LIFE * SCORE_PER_SHOT * 2;
-				while (following.first) {
-					while (((struct enemy_spacecraft*)following.first->data)->bullets.first)
-						list_remove(((struct enemy_spacecraft*)following.first->data)->bullets.first,
-							    &((struct enemy_spacecraft*)following.first->data)->bullets);
+				while (following.first)
 					list_remove(following.first, &following);
+				while (enemy_bullets.first) {
+					MOVE_LIGHT_SUN(((struct enemy_shot *)enemy_bullets.first->data)->properties.light_idx)
+					list_remove(enemy_bullets.first, &enemy_bullets);
+				}
+				while (shots.first) {
+					MOVE_LIGHT_SUN(((struct shot *)shots.first->data)->light_idx)
+					list_remove(shots.first, &shots);
 				}
 				first_enemy = 0;
 				game_state.time = GetTime();
@@ -344,7 +363,7 @@ void game()
 
 	prev_back = 0.0f;
 	UpdateMyCamera(&camera, GetFrameTime());
-
+	
 	manage_player();	
 	manage_enemies();
 #ifdef PLAY
@@ -463,6 +482,7 @@ char name[];
 			float I = SOUND.P / Vector3Distance(POINT, (Vector3){SPACESHIP_POS}); \
 			SetSoundVolume(SOUND.sound, I); \
 			PlaySound(SOUND.sound);
+
 void manage_player()
 {
 	static Matrix pos_spaceship;
@@ -479,7 +499,7 @@ void manage_player()
 	static bool prev_collision = 0;
 	static float prev_time = 0;
 	struct node *curr, *next, *ptre;
-	Vector3 *ptrbul, new_bullet;
+	struct shot *ptrbul, new_bullet;
 	float now;
 	int i;
 	bool collision;
@@ -503,10 +523,11 @@ void manage_player()
 		prev_collision = false;
 	/*player shots*/
 	for (next = shots.first; next;) {
-		ptrbul = (Vector3*)next->data;
+		ptrbul = (struct shot *)next->data;
 		/*bullets collisions*/
-		if (collision_bullet_rocks(ptrbul)) {
-			PLAY_SOUND_BY_DIST(*ptrbul, hit_rock_player_shot)
+		if (collision_bullet_rocks(&ptrbul->position)) {
+			PLAY_SOUND_BY_DIST(ptrbul->position, hit_rock_player_shot)
+			MOVE_LIGHT_SUN(ptrbul->light_idx)
 			curr = next;
 			next = next->next;
 			list_remove(curr, &shots);
@@ -514,7 +535,7 @@ void manage_player()
 		}
 		now = GetTime();
 		// penalty
-		if (collision_bullet_field(ptrbul, &ptre)) {
+		if (collision_bullet_field(&ptrbul->position, &ptre)) {
 			if (now - ((struct enemy_spacecraft*)ptre->data)->last_shooted_penalty > 0.5f) {
 				for (i=0; i < MAX_CLASSES; i++)
 					current_error.y[i] = 0.0f;
@@ -525,23 +546,27 @@ void manage_player()
 			}
 			((struct enemy_spacecraft*)ptre->data)->last_shooted_penalty = now;
 		}
-		if (collision_bullet_enemies(ptrbul, &ptre)) {
-			PLAY_SOUND_BY_DIST(*ptrbul, hit_enemy)
+		if (collision_bullet_enemies(&ptrbul->position, &ptre)) {
+			PLAY_SOUND_BY_DIST(ptrbul->position, hit_enemy)
 			if (--((struct enemy_spacecraft*)ptre->data)->life == 0) {
 				PLAY_SOUND_BY_DIST(((struct enemy_spacecraft*)ptre->data)->shape.position, destroyed_sound)	
 				list_remove(ptre, &following);
 			}
+			MOVE_LIGHT_SUN(ptrbul->light_idx)
 			curr = next;
 			next = next->next;
 			list_remove(curr, &shots);
 			continue;
 		}
 		// bullets moves 
-		if (ptrbul->z > -2 * ARRIVAL_DIST) {
-			ptrbul->z -= BULLET_SPEED_PER_SECOND * GetFrameTime();
+		if (ptrbul->position.z > -2 * ARRIVAL_DIST) {
+			ptrbul->position.z -= BULLET_SPEED_PER_SECOND * GetFrameTime();
+			lights[ptrbul->light_idx].position = ptrbul->position;
+			UpdateLightValues(shader, lights[ptrbul->light_idx]);
 			next = next->next;
 			continue;
 		} else {
+			MOVE_LIGHT_SUN(ptrbul->light_idx)
 			curr = next;
 			next = next->next;
 			list_remove(curr, &shots);
@@ -550,14 +575,20 @@ void manage_player()
 	now = GetTime();
 	if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) &&
 	    now - prev_time > 1.0f / FIRING_RATE_PER_SECOND) {
-		new_bullet.x = camera.target.x-1.58f;
-		new_bullet.y = camera.target.y-1.926f;
-		new_bullet.z = camera.target.z - 0.62 - .4f / 2;
-		list_insert(&new_bullet, &shots, sizeof(Vector3));
-		new_bullet.x += 3.22f;
-		new_bullet.y -= 0.05f;
-		new_bullet.z -= 0.03f;
-		list_insert(&new_bullet, &shots, sizeof(Vector3));
+		new_bullet.position.x = camera.target.x - 1.58f;
+		new_bullet.position.y = camera.target.y - 1.926f;
+		new_bullet.position.z = camera.target.z - 0.62 - .4f / 2;
+		new_bullet.light_idx = find_light();
+		lights[new_bullet.light_idx].position = new_bullet.position;
+		lights[new_bullet.light_idx].color = ORANGE;
+		list_insert(&new_bullet, &shots, sizeof(struct shot));
+		new_bullet.position.x += 3.22f;
+		new_bullet.position.y -= 0.05f;
+		new_bullet.position.z -= 0.03f;
+		new_bullet.light_idx = find_light();
+		lights[new_bullet.light_idx].position = new_bullet.position;
+		lights[new_bullet.light_idx].color = ORANGE;
+		list_insert(&new_bullet, &shots, sizeof(struct shot));
 		prev_time = GetTime();
 #ifdef PLAY
 		game_state.score -= SCORE_PER_SHOT;
@@ -704,59 +735,63 @@ void manage_enemies()
 			ptrenemy->has_penalty = 1;
 			ptrenemy->last_far = now;
 		}
-
-		for (next = ptrenemy->bullets.first; next;) {
-			ptrbullet = (struct enemy_shot*)next->data;
-			// enemy bullet collision
-			if (collision_bullet_rocks(&ptrbullet->position)) {
-				PLAY_SOUND_BY_DIST(ptrbullet->position, hit_rock_enemy_shot)
-				for (i=0; i < MAX_CLASSES; i++)
-					current_error.y[i] = 0.0f;
-				current_error.y[GetRandomValue(0,3)] = 1.0f;
-				for (i=0; i < INPUT_QTT; i++)
-					current_error.x[i] = ptrbullet->state[i];
-				list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
-				curr = next;
-				next = next->next;
-				list_remove(curr, &ptrenemy->bullets);
-				continue;
-			}
-			// hit the player
-			if (collision_bullet_player(&ptrbullet->position)) {
-#ifdef PLAY
-				PlaySound(hit_player);
-				--game_state.life;
-#endif
-				for (i=0; i < MAX_CLASSES; i++)
-					current_error.y[i] = 0.0f;
-				current_error.y[4] = 1.0f;
-				for (i=0; i < INPUT_QTT; i++)
-					current_error.x[i] = ptrbullet->state[i];
-				list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
-				curr = next;
-				next = next->next;
-				list_remove(curr, &ptrenemy->bullets);
-				continue;
-			}
-			// bullet move
-			if (ptrbullet->position.z < MAX_DIST) {
-				ptrbullet->position.z += BULLET_SPEED_PER_SECOND * GetFrameTime();
-				next = next->next;
-				continue;
-			} else {
-				// bullet crossed the map
-				for (i=0; i < MAX_CLASSES; i++)
-					current_error.y[i] = 0.0f;
-				current_error.y[GetRandomValue(0,3)] = 1.0f;
-				for (i=0; i < INPUT_QTT; i++)
-					current_error.x[i] = ptrbullet->state[i];
-				list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
-				curr = next;
-				next = next->next;
-				list_remove(curr, &ptrenemy->bullets);
-			}
-		}
 		next_enemy = next_enemy->next;
+	}
+	for (next = enemy_bullets.first; next;) {
+		ptrbullet = (struct enemy_shot*)next->data;
+		// enemy bullet collision
+		if (collision_bullet_rocks(&ptrbullet->properties.position)) {
+			PLAY_SOUND_BY_DIST(ptrbullet->properties.position, hit_rock_enemy_shot)
+			for (i=0; i < MAX_CLASSES; i++)
+				current_error.y[i] = 0.0f;
+			current_error.y[GetRandomValue(0,3)] = 1.0f;
+			for (i=0; i < INPUT_QTT; i++)
+				current_error.x[i] = ptrbullet->state[i];
+			list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
+			MOVE_LIGHT_SUN(ptrbullet->properties.light_idx)
+			curr = next;
+			next = next->next;
+			list_remove(curr, &enemy_bullets);
+			continue;
+		}
+		// hit the player
+		if (collision_bullet_player(&ptrbullet->properties.position)) {
+#ifdef PLAY
+			PlaySound(hit_player);
+			--game_state.life;
+#endif
+			for (i=0; i < MAX_CLASSES; i++)
+				current_error.y[i] = 0.0f;
+			current_error.y[4] = 1.0f;
+			for (i=0; i < INPUT_QTT; i++)
+				current_error.x[i] = ptrbullet->state[i];
+			list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
+			MOVE_LIGHT_SUN(ptrbullet->properties.light_idx)
+			curr = next;
+			next = next->next;
+			list_remove(curr, &enemy_bullets);
+			continue;
+		}
+		// bullet move
+		if (ptrbullet->properties.position.z < MAX_DIST) {
+			ptrbullet->properties.position.z += BULLET_SPEED_PER_SECOND * GetFrameTime();
+			lights[ptrbullet->properties.light_idx].position = ptrbullet->properties.position;
+			UpdateLightValues(shader, lights[ptrbullet->properties.light_idx]);
+			next = next->next;
+			continue;
+		} else {
+			// bullet crossed the map
+			for (i=0; i < MAX_CLASSES; i++)
+				current_error.y[i] = 0.0f;
+			current_error.y[GetRandomValue(0,3)] = 1.0f;
+			for (i=0; i < INPUT_QTT; i++)
+				current_error.x[i] = ptrbullet->state[i];
+			list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
+			MOVE_LIGHT_SUN(ptrbullet->properties.light_idx)
+			curr = next;
+			next = next->next;
+			list_remove(curr, &enemy_bullets);
+		}
 	}
 	for (next = following.first; next; next = next->next) {
 		ptrenemy = (struct enemy_spacecraft*)next->data;
@@ -863,12 +898,15 @@ void manage_enemies()
 		if (network_output[4] > .3f) {
 			if (now - ptrenemy->last_shoot > 1.0f / FIRING_RATE_PER_SECOND)	{
 				ptrenemy->last_shoot = now;
-				new_shot.position = ptrenemy->shape.position;
-				new_shot.position.z += 2.0f;
+				new_shot.properties.position = ptrenemy->shape.position;
+				new_shot.properties.position.z += 2.0f;
+				new_shot.properties.light_idx = find_light();
+				lights[new_shot.properties.light_idx].color = RED;
+				lights[new_shot.properties.light_idx].position = new_shot.properties.position;
 				for (i=0; i < INPUT_QTT; i++)
 					new_shot.state[i] = ptrenemy->last_state[i];
-				list_insert(&new_shot, &ptrenemy->bullets, sizeof(struct enemy_shot));
-				PLAY_SOUND_BY_DIST(new_shot.position, enemy_shot_sound);
+				list_insert(&new_shot, &enemy_bullets, sizeof(struct enemy_shot));
+				PLAY_SOUND_BY_DIST(new_shot.properties.position, enemy_shot_sound);
 			}
 		} else if (now - ptrenemy->last_shoot > 1.0f) {
 			ptrenemy->penalties.dont_shoot = 1;
@@ -880,7 +918,7 @@ void manage_enemies()
 
 void draw_scene()
 {
-	struct node *next, *curr;
+	struct node *next;
 	struct model *draw_model;
 	Vector3 position, new_bullet, aux_bullet;
 	float inc, limit, dist;
@@ -923,7 +961,7 @@ void draw_scene()
 				position,
 				draw_model->angles,
 				draw_model->scale,
-				WHITE);
+				MODEL_COLOR);
 	}
 	for (next = following.first; next; next = next->next) {
 		draw_model = &((struct enemy_spacecraft*)next->data)->shape;
@@ -949,16 +987,15 @@ void draw_scene()
 #endif
 	}
 	DrawSphere((Vector3){camera.position.x + SUN_X, camera.position.y + SUN_Y, camera.position.z + SUN_Z}, 100.0f, YELLOW);
-	DrawModel(mod_spaceship, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
+	DrawModel(mod_spaceship, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, MODEL_COLOR);
 	for (next = shots.first; next; next = next->next) {
 		aux_bullet = new_bullet = *(Vector3*)next->data;
 		new_bullet.z += .2f;
 		aux_bullet.z -= .4f;
 		DrawCapsule(new_bullet, aux_bullet, .125f, 4, 4, ORANGE);
 	}
-	for (curr = following.first; curr; curr = curr->next)
-		for (next = ((struct enemy_spacecraft*)curr->data)->bullets.first; next; next = next->next)
-			DrawSphere(*(Vector3*)next->data, ENEMY_BULLET_SIZE, RED);
+	for (next = enemy_bullets.first; next; next = next->next)
+		DrawSphere(*(Vector3*)next->data, ENEMY_BULLET_SIZE, RED);
 }
 
 collision_enemy_rocks(enemy)
@@ -1023,4 +1060,14 @@ Vector3 *bullet;
 	if (CheckCollisionBoxSphere(new_spaceship2, *bullet, ENEMY_BULLET_SIZE))
 		return 1;
 	return 0;
+}
+
+find_light()
+{
+	int i;
+
+	for (i=1; i < MAX_LIGHTS; i++)
+		if (lights[i].position.x == SUN_X)
+			return i;
+	return -1;
 }

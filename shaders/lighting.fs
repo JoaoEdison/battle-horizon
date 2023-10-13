@@ -15,7 +15,7 @@ out vec4 finalColor;
 
 // NOTE: Add here your custom variables
 
-#define     MAX_LIGHTS              4
+#define     MAX_LIGHTS              80
 #define     LIGHT_DIRECTIONAL       0
 #define     LIGHT_POINT             1
 
@@ -46,6 +46,7 @@ void main()
     vec3 normal = normalize(fragNormal);
     vec3 viewD = normalize(viewPos - fragPosition);
     vec3 specular = vec3(0.0);
+    float attenuation;
 
     // NOTE: Implement here your fragment shader code
 
@@ -58,19 +59,23 @@ void main()
             if (lights[i].type == LIGHT_DIRECTIONAL)
             {
                 light = -normalize(lights[i].target - lights[i].position);
+		attenuation = 1.0;
             }
 
             if (lights[i].type == LIGHT_POINT)
             {
-                light = normalize(lights[i].position - fragPosition);
+		vec3 to_light = lights[i].position - fragPosition;
+		float d = length(to_light);
+                light = normalize(to_light);
+		attenuation = clamp(1.0 / (d * d * 0.05), 0.0, 1.0);
             }
 
-            float NdotL = max(dot(normal, light), 0.0);
+            float NdotL = max(dot(normal, light), 0.0) * attenuation;
             lightDot += lights[i].color.rgb*NdotL;
 
             float specCo = 0.0;
             if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 16.0); // 16 refers to shine
-            specular += specCo;
+            specular += specCo * attenuation;
         }
     }
 

@@ -36,7 +36,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_LIGHTS  4         // Max dynamic lights supported by shader
+#define MAX_LIGHTS  80         // Max dynamic lights supported by shader
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -49,7 +49,6 @@ typedef struct {
     Vector3 position;
     Vector3 target;
     Color color;
-    float attenuation;
     
     // Shader locations
     int enabledLoc;
