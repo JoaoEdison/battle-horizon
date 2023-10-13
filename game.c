@@ -22,13 +22,16 @@
 #include "ai/neural_img.h"
 #include "ui.c"
 #include "spacecraft.c"
+#define RLIGHTS_IMPLEMENTATION
+#include "shaders/rlights.h"
 
 #define PLAY
 
 /* TODO:
- * luz;
- * municao;
- * arrumar alguns erros.
+ * hard level;
+ * light;
+ * ammunition;
+ * fix errors.
  * */
 
 struct enemy_spacecraft {
@@ -82,6 +85,12 @@ struct sound_I {
 Sound shot_sound, victory_sound, defeat_sound, hit_player, collision_sound;
 
 #define WEIGHTS_LOCATION "data/weights"
+
+Shader shader;
+
+#define SUN_X   250.0f
+#define SUN_Y   150.0f
+#define SUN_Z (700.0f)
 
 main(argc, argv)
 char *argv[];
@@ -147,6 +156,21 @@ char *argv[];
 	enemy_shot_sound.P = 12.0f;
 	destroyed_sound.sound = LoadSound("sounds/enemy-destroyed.mp3");
 	destroyed_sound.P = 12.0f;
+
+	mod_spaceship = LoadModel("models/spacecraft.glb");
+	//shaders
+	shader = LoadShader("shaders/lighting.vs", "shaders/lighting.fs");
+	shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+//	int ambientLoc = GetShaderLocation(shader, "ambient");
+//	SetShaderValue(shader, ambientLoc, (float[4]){0.1f, 0.1f, 0.1f, 1.0f}, SHADER_UNIFORM_VEC4);
+	for (i=0; i < mod_spaceship.materialCount; i++)
+		mod_spaceship.materials[i].shader = shader;
+	
+	CreateLight(LIGHT_DIRECTIONAL, (Vector3){SUN_X, SUN_Y, SUN_Z}, Vector3Zero(), WHITE, shader);
+
+	SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], (float[3]){SUN_X, SUN_Y, SUN_Z}, SHADER_UNIFORM_VEC3);
+
+	SetTargetFPS(60);
 #ifdef PLAY
 	load_map("teste4.map");
 	font = LoadFont("font/setback.png");
@@ -158,9 +182,7 @@ char *argv[];
 	DisableCursor();
 	current_screen = game;
 #endif
-	SetTargetFPS(60);
 
-	mod_spaceship = LoadModel("models/spacecraft.glb");
 #ifdef PLAY
 	while (!WindowShouldClose() && !exit_game)
 		current_screen();
@@ -181,7 +203,7 @@ char *argv[];
 	UnloadSound(victory_sound);
 	UnloadSound(defeat_sound);
 	UnloadSound(ui_sound);
-	CloseAudioDevice();	
+	CloseAudioDevice();
 #ifdef PLAY
 	save_scores();
 #else
@@ -322,6 +344,7 @@ void game()
 
 	prev_back = 0.0f;
 	UpdateMyCamera(&camera, GetFrameTime());
+
 	manage_player();	
 	manage_enemies();
 #ifdef PLAY
@@ -354,7 +377,11 @@ void game()
 		prev_back = GetTime();
 	}
 	BeginDrawing();
+#ifdef PLAY
 		ClearBackground(BLACK);
+#else
+		ClearBackground(WHITE);
+#endif
 		BeginMode3D(camera);
 			draw_scene();
 		EndMode3D();
@@ -384,7 +411,7 @@ void load_map(name)
 char name[];
 {
 	struct model new;
-	short i, j, enemy_idx;
+	short i, j, k, enemy_idx;
 	FILE *fp;
 	
 	enemy_idx = -1;
@@ -397,6 +424,8 @@ char name[];
 		fscanf(fp, "%hhd %s\n", &models[i].has_texture, models[i].texturepath);
 		if (models[i].has_texture)
 			models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
+		for (k=0; k < models[i].drawing.materialCount; k++)
+			models[i].drawing.materials[k].shader = shader;	
 		if (strstr(models[i].pathname, "enemy"))
 			enemy_idx = i;
 		models[i].collision_list.first = NULL;
@@ -612,7 +641,6 @@ struct node **enemy;
 	return 0;
 }
 
-#define ENEMY_FIELD 5.0f
 #define LIMIT_DISTANCE_TO_PLAYER 10.0f
 
 collision_bullet_field(bullet, enemy)
@@ -864,7 +892,7 @@ void draw_scene()
 				draw_model->position,
 				draw_model->angles,
 				draw_model->scale,
-				GRAY);
+				WHITE);
 #ifndef PLAY
 		draw_collisions_wires(draw_model, &models[draw_model->model].collision_list);
 #endif
@@ -920,7 +948,7 @@ void draw_scene()
 			                  ((struct enemy_spacecraft*)next->data)->dist + LIMIT_DISTANCE_TO_PLAYER? RED : BLUE);
 #endif
 	}
-	DrawSphere((Vector3){camera.position.x+250.0f, camera.position.y+150.0f, camera.position.z-700.0f}, 100.0f, YELLOW);
+	DrawSphere((Vector3){camera.position.x + SUN_X, camera.position.y + SUN_Y, camera.position.z + SUN_Z}, 100.0f, YELLOW);
 	DrawModel(mod_spaceship, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
 	for (next = shots.first; next; next = next->next) {
 		aux_bullet = new_bullet = *(Vector3*)next->data;

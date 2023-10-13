@@ -1,4 +1,4 @@
-LDFLAGS = -lraylib -lGL -lm -pthread -ldl -lrt -lX11 -g -lcblas
+LDFLAGS = -lraylib -lGL -lm -pthread -ldl -lrt -lX11 -lcblas -g
 CFLAGS = -Wall -Wno-implicit -Wno-multistatement-macros -O3
 
 all: game editor ai/neural_img.o
