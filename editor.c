@@ -121,7 +121,7 @@ main()
 	struct node *next, *selected;
 	Vector3 lastpos;
 	bool move = false, save_flag = false, open_flag = false;
-	char name[MAX_MAP_NAME_LEN];
+	char name[MAX_MAP_NAME_LEN], real_name[MAX_MAP_NAME_LEN+9];
 	int key, letter_count = 0;
 
 	*name = '\0';
@@ -143,7 +143,7 @@ main()
 	while (!WindowShouldClose()) {
 		if (save_flag || open_flag) {
 			while ((key = GetCharPressed()))
-				if (letter_count < MAX_MAP_NAME_LEN-1-4 && key != KEY_ENTER && key != KEY_BACKSPACE) {
+				if (letter_count < MAX_MAP_NAME_LEN-1 && key != KEY_ENTER && key != KEY_BACKSPACE) {
 					name[letter_count++] = key;
 					name[letter_count] = '\0';
 				}
@@ -154,13 +154,15 @@ main()
 				}
 			} else if (IsKeyPressed(KEY_ENTER)) {
 				if (letter_count) {
-					strcat(name, ".map");
+					strcpy(real_name, "data/");
+					strcat(real_name, name);
+					strcat(real_name, ".map");
 					if (save_flag) {
-						save_map(name);
+						save_map(real_name);
 						*name = letter_count = save_flag = 0;
 
-					} else if (FileExists(name)) {
-						open_map(name);
+					} else if (FileExists(real_name)) {
+						open_map(real_name);
 						*name = letter_count = open_flag = 0;
 					} else {
 						strcpy(name, "Arquivo Inexistente!");

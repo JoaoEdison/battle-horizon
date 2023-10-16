@@ -49,6 +49,8 @@ struct {
 
 char name[MAX_NAME_LEN] = "nome";
 
+bool easy_map = true;
+
 /*ordenado por pontuação, data, nome e segundos*/
 sort_scores(x, y)
 void *x, *y;
@@ -79,9 +81,11 @@ static void save_score()
 	time_t time_raw;
 	struct score_entry *new_score;
 	struct tm *ptrtime;
+	struct vector_d *scorelist;
 	
-	new_score = (struct score_entry*) LAST_SPACE_LOCAL(scores_easy);
-	scores_easy.nmemb++;
+	scorelist = easy_map? &scores_easy : &scores_hard;
+	new_score = (struct score_entry*) LAST_SPACE_PTR(scorelist);
+	scorelist->nmemb++;
 	strcpy(new_score->name, name);
 	new_score->score = game_state.score;
 	new_score->seconds = DEADLINE_SECS - GetTime() + game_state.time + 3;
@@ -90,11 +94,12 @@ static void save_score()
 	new_score->day = ptrtime->tm_mday; 
 	new_score->month = ptrtime->tm_mon + 1;
 	new_score->year = ptrtime->tm_year - 100;
-	qsort(scores_easy.base, scores_easy.nmemb, scores_easy.sizememb, sort_scores);
+	qsort(scorelist->base, scorelist->nmemb, scorelist->sizememb, sort_scores);
 }
 
 draw_ui(width, height)
 {
+	void unload_map();
 	float now;
 	char time_stamp[8];
 	
@@ -128,6 +133,7 @@ draw_ui(width, height)
 			game_state.score += game_state.life * SCORE_PER_LIFE;
 			game_state.score += (DEADLINE_SECS + game_state.time - GetTime()) * SCORE_PER_SECOND;
 			save_score();
+			unload_map();
 			return 1;
 		}
 		DrawTextEx(font, "VOCE VENCEU", (Vector2){
@@ -138,8 +144,10 @@ draw_ui(width, height)
 		now = GetTime();
 		if (game_state.prev_time == 0.0f)
 			game_state.prev_time = now;
-		else if (game_state.prev_time + 3.0f <= now)
+		else if (game_state.prev_time + 3.0f <= now) {
+			unload_map();
 			return 1;
+		}
 		DrawTextEx(font, "VOCE PERDEU", (Vector2){
 				width/2 - MeasureTextEx(font, "VOCE PERDEU", font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
 				height/2 - MeasureTextEx(font, "VOCE PERDEU", font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
@@ -225,10 +233,21 @@ struct vector_d *v;
 #define PANEL_HEADER_SIZE 3
 #define FIRST_COMPONENT_Y 195
 
+mouse_in_rectangle(rec)
+Rectangle *rec;
+{
+	Vector2 mouse;
+	
+	mouse = GetMousePosition();
+	return (mouse.x > rec->x &&
+	        mouse.x < rec->x + rec->width &&
+	        mouse.y > rec->y &&
+	        mouse.y < rec->y + rec->height);
+}
+
 draw_play(width, height)
 {
-	Rectangle rec, input_rec;
-	Vector2 mouse;
+	Rectangle rec;
 	int ret;
 	bool edit;
 	
@@ -241,21 +260,24 @@ draw_play(width, height)
 	rec.y = PANEL_MARGIN_TOP;
 	GuiPanel(rec, "Facil");
 	draw_scores(&scores_easy, (int)(rec.x), (int)(rec.x + rec.width), (int)(rec.y) + 65);
+	if (easy_map)
+		DrawRectangleLinesEx(rec, 3.0f, SKYBLUE);
+	if (mouse_in_rectangle(&rec))
+		if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) ||
+		    IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) ||
+		    IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+			easy_map = true;
+	
 	rec.x = width / 2 + PANEL_MARGIN_INSIDE;
 	GuiPanel(rec, "Dificil");
 	draw_scores(&scores_hard, (int)(rec.x), (int)(rec.x + rec.width), (int)(rec.y) + 65);
-	
-	GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize * BUTTON_FONT_SIZE);
-	input_rec.height = 60;
-	input_rec.width = 600;
-	input_rec.x = (width - input_rec.width) / 2; 
-	input_rec.y = FIRST_COMPONENT_Y;
-	mouse = GetMousePosition();
-	edit = mouse.x > input_rec.x &&
-	        mouse.x < input_rec.x + input_rec.width &&
-	        mouse.y > input_rec.y &&
-	        mouse.y < input_rec.y + input_rec.height;
-	GuiTextBox(input_rec, name, 30, edit);
+	if (!easy_map)
+		DrawRectangleLinesEx(rec, 3.0f, RED);
+	if (mouse_in_rectangle(&rec))
+		if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) ||
+		    IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) ||
+		    IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+			easy_map = false;
 
 	rec.y = (height + rec.y + rec.height) / 2;
 	rec.width = MeasureTextEx(font, "Voltar", font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
@@ -269,6 +291,15 @@ draw_play(width, height)
 	rec.x = width / 2 + PANEL_MARGIN_INSIDE;
 	if (GuiButton(rec, "Jogar"))
 		ret = 2;
+	
+	GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize * BUTTON_FONT_SIZE);
+	rec.height = 60;
+	rec.width = 600;
+	rec.x = (width - rec.width) / 2; 
+	rec.y = FIRST_COMPONENT_Y;
+	edit = mouse_in_rectangle(&rec);
+	GuiTextBox(rec, name, 30, edit);
+
 	if (ret != 1)
 		PlaySound(ui_sound);
 	return ret;

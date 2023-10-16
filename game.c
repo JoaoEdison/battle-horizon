@@ -28,13 +28,10 @@
 #define PLAY
 
 /* TODO:
- * hard level;
+ * change the name of the game...
  * ammunition;
  * fix errors.
  * */
-
-/*quando um inimigo eh destruido, suas balas devem permanecer no mapa!!!*/
-/*mas e a retropropagação???*/
 
 struct enemy_spacecraft {
 	struct model shape;
@@ -105,7 +102,7 @@ Light lights[MAX_LIGHTS];
 main(argc, argv)
 char *argv[];
 {
-	void load_map(), init_network(), menu(), game();
+	void load_map(), unload_map(), init_network(), menu(), game();
 	int i;
 #ifdef PLAY
 	void load_scores(), save_scores();
@@ -150,7 +147,7 @@ char *argv[];
 	defeat_sound = LoadSound("sounds/lost.mp3");
 	SetSoundVolume(defeat_sound, 0.5f);
 	hit_player = LoadSound("sounds/hit-player.wav");
-	SetSoundVolume(hit_player, 0.15f);
+	SetSoundVolume(hit_player, 0.1f);
 	
 	hit_enemy.sound = LoadSound("sounds/hit-enemy.mp3");
 	hit_enemy.P = 150.0f;
@@ -182,7 +179,6 @@ char *argv[];
 
 	SetTargetFPS(60);
 #ifdef PLAY
-	load_map("teste4.map");
 	font = LoadFont("font/setback.png");
 	load_scores();
 	ToggleFullscreen();
@@ -242,17 +238,17 @@ void load_scores()
 	char c, *ptrname;
 	FILE *fp;
 	
-	ALLOCATE_LOCAL(scores_easy, sizeof(struct score_entry), 10)
-	ALLOCATE_LOCAL(scores_hard, sizeof(struct score_entry), 10)
+	ALLOCATE(scores_easy, sizeof(struct score_entry), 10)
+	ALLOCATE(scores_hard, sizeof(struct score_entry), 10)
 	if ((fp = fopen("data/scores.csv", "r"))) {
 		for (;;) {
 			if (fscanf(fp, "%hhd,", &easy) == EOF)
 				break;
 			if (easy) {
-				new_score = (struct score_entry*) LAST_SPACE_LOCAL(scores_easy);
+				new_score = (struct score_entry*) LAST_SPACE(scores_easy);
 				scores_easy.nmemb++;
 			} else {
-				new_score = (struct score_entry*) LAST_SPACE_LOCAL(scores_hard);
+				new_score = (struct score_entry*) LAST_SPACE(scores_hard);
 				scores_hard.nmemb++;
 			}
 			fscanf(fp, "%d,", &new_score->score);
@@ -303,7 +299,7 @@ int screen = 0;
 
 void menu()
 {
-	void game();
+	void game(), load_map();
 
 	BeginDrawing();
 		ClearBackground(BLACK);
@@ -316,6 +312,7 @@ void menu()
 				screen = draw_play(screen_width, screen_height);
 				break;
 			case 2:
+				load_map(easy_map? "data/easy.map" : "data/hard.map");
 				SetMousePosition(screen_width / 2, screen_height / 2);
 				DisableCursor();
 
@@ -475,6 +472,20 @@ char name[];
 	}
 	fclose(fp);
 	qsort(enemies, total_enemies, sizeof(struct model), sort_by_dist);
+}
+
+void unload_map()
+{
+	int i;
+
+	total_enemies = 0;
+	while (rocks.first)
+		list_remove(rocks.first, &rocks);
+	for (i = 0; i < model_count; i++)
+		while (models[i].collision_list.first)
+			list_remove(models[i].collision_list.first, &models[i].collision_list);
+	free(models);
+	model_count = 0;
 }
 
 #define SPACESHIP_POS camera.target.x, camera.target.y - 1.8f, camera.target.z + 0.5f
