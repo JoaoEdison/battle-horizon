@@ -1,4 +1,6 @@
 <div align="center">
+  <img src="https://github.com/JoaoEdison/ocrc/blob/main/screenshot.jpg" alt="Screenshot of the game">
+
   <h1>Spacecraft</h1>
   3D space battle game in Raylib
 </div>

@@ -132,7 +132,7 @@ char *argv[];
 	camera.projection = CAMERA_PERSPECTIVE;
 	
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
-	InitWindow(0, 0, "Batalha Espacial");
+	InitWindow(0, 0, t_t_game);
 	screen_width = GetScreenWidth();
 	screen_height = GetScreenHeight();
 	
@@ -303,9 +303,9 @@ void menu()
 
 	BeginDrawing();
 		ClearBackground(BLACK);
-		DrawTextEx(font, "SPACECRAFT", (Vector2){
-				screen_width/2 - MeasureTextEx(font, "SPACECRAFT", font.baseSize * TITLE_SIZE, SPACING).x/2,
-				MeasureTextEx(font, "SPACECRAFT", font.baseSize * TITLE_SIZE, SPACING).y/4
+		DrawTextEx(font, t_t_game, (Vector2){
+				screen_width/2 - MeasureTextEx(font, t_t_game, font.baseSize * TITLE_SIZE, SPACING).x/2,
+				MeasureTextEx(font, t_t_game, font.baseSize * TITLE_SIZE, SPACING).y/4
 				}, font.baseSize * TITLE_SIZE, SPACING, BLUE);
 		switch (screen) {
 			case 1:

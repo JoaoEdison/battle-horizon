@@ -20,6 +20,7 @@
 #include "linked_list.c"
 #include "array.c"
 #include "defs.h"
+#include "translate.c"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.c"
 
@@ -47,7 +48,7 @@ struct {
 	float prev_time, time;
 } game_state = { 0 };
 
-char name[MAX_NAME_LEN] = "nome";
+char name[MAX_NAME_LEN] = T_M_NAME;
 
 bool easy_map = true;
 
@@ -136,9 +137,9 @@ draw_ui(width, height)
 			unload_map();
 			return 1;
 		}
-		DrawTextEx(font, "VOCE VENCEU", (Vector2){
-				width/2 - MeasureTextEx(font, "VOCE VENCEU", font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
-				height/2 - MeasureTextEx(font, "VOCE VENCEU", font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
+		DrawTextEx(font, t_m_win, (Vector2){
+				width/2 - MeasureTextEx(font, t_m_win, font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
+				height/2 - MeasureTextEx(font, t_m_win, font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
 				}, font.baseSize * WIN_MESSAGE_SIZE, SPACING, GREEN);
 	} else {
 		now = GetTime();
@@ -148,9 +149,9 @@ draw_ui(width, height)
 			unload_map();
 			return 1;
 		}
-		DrawTextEx(font, "VOCE PERDEU", (Vector2){
-				width/2 - MeasureTextEx(font, "VOCE PERDEU", font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
-				height/2 - MeasureTextEx(font, "VOCE PERDEU", font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
+		DrawTextEx(font, t_m_lost, (Vector2){
+				width/2 - MeasureTextEx(font, t_m_lost, font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
+				height/2 - MeasureTextEx(font, t_m_lost, font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
 				}, font.baseSize * WIN_MESSAGE_SIZE, SPACING, RED);
 	}
 	return 0;
@@ -169,17 +170,17 @@ draw_menu(width, height)
 	Rectangle rec;
 	GuiSetFont(font);
 	GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize * BUTTON_FONT_SIZE);
-	rec.width = MeasureTextEx(font, "Jogar", font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
-	rec.height = MeasureTextEx(font, "Jogar", font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
+	rec.width = MeasureTextEx(font, t_m_play, font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
+	rec.height = MeasureTextEx(font, t_m_play, font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
 	rec.x = (width - rec.width) / 2;
 	rec.y = height / 2 - 150;
-	if (GuiButton(rec, "Jogar"))
+	if (GuiButton(rec, t_m_play))
 		ret = 1;
 	rec.y += 100;
-	if (GuiButton(rec, "Sobre"))
+	if (GuiButton(rec, t_m_about))
 		ret = 3;
 	rec.y += 100;
-	if (GuiButton(rec, "Sair"))
+	if (GuiButton(rec, t_m_exit))
 		ret = 4;
 	if (ret)
 		PlaySound(ui_sound);
@@ -258,7 +259,7 @@ draw_play(width, height)
 	rec.height = height - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTON;
 	rec.x = PANEL_MARGIN_OUTSIDE;
 	rec.y = PANEL_MARGIN_TOP;
-	GuiPanel(rec, "Facil");
+	GuiPanel(rec, t_m_easy);
 	draw_scores(&scores_easy, (int)(rec.x), (int)(rec.x + rec.width), (int)(rec.y) + 65);
 	if (easy_map)
 		DrawRectangleLinesEx(rec, 3.0f, SKYBLUE);
@@ -269,7 +270,7 @@ draw_play(width, height)
 			easy_map = true;
 	
 	rec.x = width / 2 + PANEL_MARGIN_INSIDE;
-	GuiPanel(rec, "Dificil");
+	GuiPanel(rec, t_m_hard);
 	draw_scores(&scores_hard, (int)(rec.x), (int)(rec.x + rec.width), (int)(rec.y) + 65);
 	if (!easy_map)
 		DrawRectangleLinesEx(rec, 3.0f, RED);
@@ -280,16 +281,16 @@ draw_play(width, height)
 			easy_map = false;
 
 	rec.y = (height + rec.y + rec.height) / 2;
-	rec.width = MeasureTextEx(font, "Voltar", font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
-	rec.height = MeasureTextEx(font, "Voltar", font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
+	rec.width = MeasureTextEx(font, t_m_back, font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
+	rec.height = MeasureTextEx(font, t_m_back, font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
 	rec.y -= rec.height / 2;
 	rec.x = width / 2 - rec.width - PANEL_MARGIN_INSIDE;
-	if (GuiButton(rec, "Voltar"))
+	if (GuiButton(rec, t_m_back))
 		ret = 0;
 
-	rec.width = MeasureTextEx(font, "Jogar", font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
+	rec.width = MeasureTextEx(font, t_m_play, font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
 	rec.x = width / 2 + PANEL_MARGIN_INSIDE;
-	if (GuiButton(rec, "Jogar"))
+	if (GuiButton(rec, t_m_play))
 		ret = 2;
 	
 	GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize * BUTTON_FONT_SIZE);
@@ -416,8 +417,6 @@ static void DrawTextBoxedSelectable(Font font, const char *text, Rectangle rec, 
     }
 }
 
-static char text_about[] = "Spacecraft eh um jogo de batalha espacial desenvolvido no motor de jogo Raylib.";
-
 draw_about(width, height)
 {
 	int ret;
@@ -430,17 +429,17 @@ draw_about(width, height)
 	rec.height = height - FIRST_COMPONENT_Y - PANEL_MARGIN_BOTTON;
 	rec.x = PANEL_MARGIN_OUTSIDE;
 	rec.y = FIRST_COMPONENT_Y;
-	GuiPanel(rec, "Sobre o Jogo");
+	GuiPanel(rec, t_m_about_header);
 	rec.y += 65;
 	rec.x += 5;
 	DrawTextBoxedSelectable(font, text_about, rec, font.baseSize * 4, 1, GetColor(GuiGetStyle(STATUSBAR, BASE)), 0, 0, BLACK, BLACK);
 	rec.y -= 65;
-	rec.width = MeasureTextEx(font, "Voltar", font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
+	rec.width = MeasureTextEx(font, t_m_back, font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
 	rec.y = (height + rec.y + rec.height) / 2;
-	rec.height = MeasureTextEx(font, "Voltar", font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
+	rec.height = MeasureTextEx(font, t_m_back, font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
 	rec.y -= rec.height / 2;
 	rec.x = (width - rec.width) / 2;
-	if (GuiButton(rec, "Voltar"))
+	if (GuiButton(rec, t_m_back))
 		ret = 0;
 	if (!ret)
 		PlaySound(ui_sound);
