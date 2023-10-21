@@ -266,8 +266,10 @@ draw_play(width, height)
 	if (mouse_in_rectangle(&rec))
 		if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) ||
 		    IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) ||
-		    IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+		    IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+			PlaySound(ui_sound);
 			easy_map = true;
+		}
 	
 	rec.x = width / 2 + PANEL_MARGIN_INSIDE;
 	GuiPanel(rec, t_m_hard);
@@ -277,8 +279,10 @@ draw_play(width, height)
 	if (mouse_in_rectangle(&rec))
 		if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) ||
 		    IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) ||
-		    IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+		    IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+			PlaySound(ui_sound);
 			easy_map = false;
+		}
 
 	rec.y = (height + rec.y + rec.height) / 2;
 	rec.width = MeasureTextEx(font, t_m_back, font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;

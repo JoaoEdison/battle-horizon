@@ -36,7 +36,7 @@
 struct enemy_spacecraft {
 	struct model shape;
 	float dist;
-	float last_shoot, last_meteor_penalty, last_meteor, last_shooted_penalty;
+	float last_shoot, last_asteroid_penalty, last_asteroid, last_shooted_penalty;
 	Color color;
 	int life;
 	float last_state[INPUT_QTT], last_move, last_far;
@@ -66,7 +66,7 @@ struct enemy_error {
 
 struct models_with_collisions *models;
 short model_count;
-struct list rocks = { 0 };
+struct list asteroids = { 0 };
 struct list following = { 0 };
 struct list shots = { 0 };
 struct list enemy_bullets = { 0 };
@@ -83,8 +83,8 @@ struct sound_I {
 	Sound sound;
 	float P;
 } destroyed_sound, enemy_shot_sound,
-  hit_rock_player_shot, hit_rock_enemy_shot,
-  hit_enemy, hit_rock_enemy_spacecraft;
+  hit_asteroid_player_shot, hit_asteroid_enemy_shot,
+  hit_enemy, hit_asteroid_enemy_spacecraft;
 
 Sound shot_sound, victory_sound, defeat_sound, hit_player, collision_sound;
 
@@ -111,8 +111,8 @@ char *argv[];
 	game_state.life = MAX_LIFE;
 #endif
 	new_enemy.color = MODEL_COLOR;
-	new_enemy.last_meteor_penalty = new_enemy.last_shooted_penalty = 0.0f;
-	new_enemy.last_meteor = new_enemy.last_shoot = 0.0f;
+	new_enemy.last_asteroid_penalty = new_enemy.last_shooted_penalty = 0.0f;
+	new_enemy.last_asteroid = new_enemy.last_shoot = 0.0f;
 	new_enemy.penalties.faraway = 0;	
 	new_enemy.penalties.dont_move = 0;
 	new_enemy.last_far = new_enemy.last_move = 0.0f;
@@ -141,7 +141,7 @@ char *argv[];
 	SetSoundVolume(ui_sound, 2.0f);
 	shot_sound = LoadSound("sounds/laser3.mp3");
 	SetSoundVolume(shot_sound, 0.08f);
-	collision_sound = LoadSound("sounds/hit-rock-spacecraft.wav");
+	collision_sound = LoadSound("sounds/hit-asteroid-spacecraft.wav");
 	SetSoundVolume(collision_sound, 0.2f);
 	victory_sound = LoadSound("sounds/win.mp3");
 	defeat_sound = LoadSound("sounds/lost.mp3");
@@ -151,12 +151,12 @@ char *argv[];
 	
 	hit_enemy.sound = LoadSound("sounds/hit-enemy.mp3");
 	hit_enemy.P = 150.0f;
-	hit_rock_player_shot.sound = LoadSound("sounds/hit-rock-player-shot.mp3");
-	hit_rock_player_shot.P = 150.0f;
-	hit_rock_enemy_shot.sound = LoadSound("sounds/hit-rock-enemy-shot.mp3");
-	hit_rock_enemy_shot.P = 75.0f;
-	hit_rock_enemy_spacecraft.sound = LoadSound("sounds/hit-rock-enemy-spacecraft.wav");
-	hit_rock_enemy_spacecraft.P = 12.0f;
+	hit_asteroid_player_shot.sound = LoadSound("sounds/hit-asteroid-player-shot.mp3");
+	hit_asteroid_player_shot.P = 150.0f;
+	hit_asteroid_enemy_shot.sound = LoadSound("sounds/hit-asteroid-enemy-shot.mp3");
+	hit_asteroid_enemy_shot.P = 75.0f;
+	hit_asteroid_enemy_spacecraft.sound = LoadSound("sounds/hit-asteroid-enemy-spacecraft.wav");
+	hit_asteroid_enemy_spacecraft.P = 12.0f;
 	enemy_shot_sound.sound = LoadSound("sounds/enemy-shot.mp3");
 	enemy_shot_sound.P = 12.0f;
 	destroyed_sound.sound = LoadSound("sounds/enemy-destroyed.mp3");
@@ -197,9 +197,9 @@ char *argv[];
 		game();
 #endif
 	CloseWindow();
-	UnloadSound(hit_rock_enemy_spacecraft.sound);
-	UnloadSound(hit_rock_enemy_shot.sound);
-	UnloadSound(hit_rock_player_shot.sound);
+	UnloadSound(hit_asteroid_enemy_spacecraft.sound);
+	UnloadSound(hit_asteroid_enemy_shot.sound);
+	UnloadSound(hit_asteroid_player_shot.sound);
 	UnloadSound(hit_player);
 	UnloadSound(hit_enemy.sound);
 	UnloadSound(shot_sound);
@@ -466,7 +466,7 @@ char name[];
 		fscanf(fp, "%f %f %f\n", &new.angles.x,
 				&new.angles.y, &new.angles.z);
 		if (enemy_idx != new.model)
-			list_insert(&new, &rocks, sizeof(struct model));
+			list_insert(&new, &asteroids, sizeof(struct model));
 		else
 			enemies[total_enemies++] = new;
 	}
@@ -479,8 +479,8 @@ void unload_map()
 	int i;
 
 	total_enemies = 0;
-	while (rocks.first)
-		list_remove(rocks.first, &rocks);
+	while (asteroids.first)
+		list_remove(asteroids.first, &asteroids);
 	for (i = 0; i < model_count; i++)
 		while (models[i].collision_list.first)
 			list_remove(models[i].collision_list.first, &models[i].collision_list);
@@ -524,8 +524,8 @@ void manage_player()
 	new_spaceship1.max = Vector3Transform(box_spaceship1.max, pos_spaceship);
 	new_spaceship2.min = Vector3Transform(box_spaceship2.min, pos_spaceship);
 	new_spaceship2.max = Vector3Transform(box_spaceship2.max, pos_spaceship);
-	/*player collision with meteors*/
-	collision = collision_spacecraft_rocks();
+	/*player collision with asteroids*/
+	collision = collision_spacecraft_asteroids();
 	if (collision && !prev_collision) {
 		PlaySound(collision_sound);
 		prev_collision = true;
@@ -543,17 +543,17 @@ void manage_player()
 						 ptrbullet->position.z -
 						 BULLET_SPEED_PER_SECOND * GetFrameTime()};
 			/*bullets collisions*/
-			if (collision_bullet_meteors(ptrbullet->position, next_position, PLAYER_BULLET_SIZE)) {
-				PLAY_SOUND_BY_DIST(ptrbullet->position, hit_rock_player_shot)
+			if (collision_bullet_asteroids(ptrbullet->position, next_position, PLAYER_BULLET_SIZE)) {
+				PLAY_SOUND_BY_DIST(ptrbullet->position, hit_asteroid_player_shot)
 				MOVE_LIGHT_SUN(ptrbullet->light_idx)
 				curr = next;
 				next = next->next;
 				list_remove(curr, &shots);
 				continue;
 			}
-			now = GetTime();
-			// penalty
-			if (collision_bullet_field(ptrbullet->position, next_position, PLAYER_BULLET_SIZE, &ptre)) {
+   			// penalty
+			if (collision_bullet_field(&ptrbullet->position, &next_position, &ptre)) {
+				now = GetTime();
 				if (now - ((struct enemy_spacecraft*)ptre->data)->last_shooted_penalty > 0.5f) {
 					for (i=0; i < MAX_CLASSES; i++)
 						current_error.y[i] = 0.0f;
@@ -563,18 +563,19 @@ void manage_player()
 					list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
 				}
 				((struct enemy_spacecraft*)ptre->data)->last_shooted_penalty = now;
-			}
-			if (collision_bullet_enemies(ptrbullet->position, next_position, PLAYER_BULLET_SIZE, &ptre)) {
-				PLAY_SOUND_BY_DIST(ptrbullet->position, hit_enemy)
-				if (--((struct enemy_spacecraft*)ptre->data)->life == 0) {
-					PLAY_SOUND_BY_DIST(((struct enemy_spacecraft*)ptre->data)->shape.position, destroyed_sound)	
-					list_remove(ptre, &following);
+				// damage
+				if (collision_bullet_enemies(&ptrbullet->position, &next_position, &ptre)) {
+					PLAY_SOUND_BY_DIST(ptrbullet->position, hit_enemy)
+					if (--((struct enemy_spacecraft*)ptre->data)->life == 0) {
+						PLAY_SOUND_BY_DIST(((struct enemy_spacecraft*)ptre->data)->shape.position, destroyed_sound)
+						list_remove(ptre, &following);
+					}
+					MOVE_LIGHT_SUN(ptrbullet->light_idx)
+					curr = next;
+					next = next->next;
+					list_remove(curr, &shots);
+					continue;
 				}
-				MOVE_LIGHT_SUN(ptrbullet->light_idx)
-				curr = next;
-				next = next->next;
-				list_remove(curr, &shots);
-				continue;
 			}
 			ptrbullet->position.z -= BULLET_SPEED_PER_SECOND * GetFrameTime();
 
@@ -613,7 +614,7 @@ void manage_player()
 	}
 }
 
-collision_spacecraft_rocks()
+collision_spacecraft_asteroids()
 {
 	struct node *next, *next_box;
 	struct list *collisions_list;
@@ -621,7 +622,7 @@ collision_spacecraft_rocks()
 	Vector3 temp;
 	float new_scale;
 
-	for (next = rocks.first; next; next = next->next) {
+	for (next = asteroids.first; next; next = next->next) {
 		current = (struct model*)next->data;
 		collisions_list = &models[current->model].collision_list;
 		for (next_box = collisions_list->first; next_box; next_box = next_box->next) {
@@ -648,8 +649,8 @@ float R, r;
 	// true radius 
 	R += r;
 	U = Vector3Normalize(Vector3Subtract(*p2, *p1));
-	if ((U.z > 0.0f && p2->z > C->z - R && p1->z <= C->z - R) ||
-	    (U.z <= 0.0f && p2->z < C->z + R && p1->z >= C->z + R)) {
+	if ((U.z > 0.0f && p2->z > C->z - R && p1->z <= C->z + R) ||
+	    (U.z <= 0.0f && p2->z < C->z + R && p1->z >= C->z - R)) {
 		Q = Vector3Subtract(*p1, *C);
 		a = Vector3DotProduct(U, U);
 		b = 2 * Vector3DotProduct(U, Q);
@@ -660,7 +661,7 @@ float R, r;
 	return 0;
 }
 
-collision_bullet_meteors(bullet_prev, bullet_after, size)
+collision_bullet_asteroids(bullet_prev, bullet_after, size)
 Vector3 bullet_prev, bullet_after;
 float size;
 {
@@ -670,7 +671,7 @@ float size;
 	Vector3 temp;
 	float new_scale;
 
-	for (next = rocks.first; next; next = next->next) {
+	for (next = asteroids.first; next; next = next->next) {
 		current = (struct model*)next->data;
 		collisions_list = &models[current->model].collision_list;
 		for (next_box = collisions_list->first; next_box; next_box = next_box->next) {
@@ -696,17 +697,16 @@ Vector3 *bullet;
 	return 0;
 }
 
-collision_bullet_field(bullet_prev, bullet_after, size, enemy)
-Vector3 bullet_prev, bullet_after;
+collision_bullet_field(bullet_prev, bullet_after, enemy)
+Vector3 *bullet_prev, *bullet_after;
 struct node **enemy;
-float size;
 {
 	struct node *next;
 	struct model *current;
 
 	for (next = following.first; next; next = next->next) {
 		current = &((struct enemy_spacecraft*)next->data)->shape; 
-		if (check_collision_sphere_line(&bullet_prev, &bullet_after, current->position,
+		if (check_collision_sphere_line(bullet_prev, bullet_after, &current->position,
 					        current->scale * ENEMY_FIELD, PLAYER_BULLET_SIZE)) {
 			*enemy = next;
 			return 1;
@@ -715,10 +715,9 @@ float size;
 	return 0;
 }
 
-collision_bullet_enemies(bullet_prev, bullet_after, size, enemy)
-Vector3 bullet_prev, bullet_after;
+collision_bullet_enemies(bullet_prev, bullet_after, enemy)
+Vector3 *bullet_prev, *bullet_after;
 struct node **enemy;
-float size;
 {
 	struct node *next, *next_box;
 	struct list *collisions_list;
@@ -733,7 +732,7 @@ float size;
 			ptrm = (struct model*)next_box->data;
 			new_scale = ptrm->scale * current->scale;
 			temp = TRANFORM_SPHERE(current, ptrm->position);
-			if (check_collision_sphere_line(&bullet_prev, &bullet_after, &temp, new_scale, PLAYER_BULLET_SIZE)) {
+			if (check_collision_sphere_line(bullet_prev, bullet_after, &temp, new_scale, PLAYER_BULLET_SIZE)) {
 				*enemy = next;
 				return 1;
 			}
@@ -748,7 +747,7 @@ void manage_enemies()
 	struct enemy_spacecraft *ptrenemy;
 	float aux, now;
 	float curr_state[INPUT_QTT];
-	bool moved;
+	bool moved, collision_field;
 	int i;
 	struct enemy_shot new_shot, *ptrbullet;
 	Vector3 next_position;
@@ -756,28 +755,29 @@ void manage_enemies()
 	for (next_enemy = following.first; next_enemy;) {
 		moved = false;
 		ptrenemy = (struct enemy_spacecraft*)next_enemy->data;
+		collision_field = collision_enemy_field_asteroids(&ptrenemy->shape.position, ptrenemy->shape.scale * ENEMY_FIELD);
 		now = GetTime();
-		// penalty 
-		if (collision_enemy_field_rocks(&ptrenemy->shape.position, ptrenemy->shape.scale * ENEMY_FIELD) &&
-		    now - ptrenemy->last_meteor_penalty > 1.0f) {
-			ptrenemy->penalties.collision = 1;
-			ptrenemy->has_penalty = 1;
-			ptrenemy->last_meteor_penalty = now;
-		}
-		// enemy meteor collision
-		if (collision_enemy_rocks(ptrenemy) && now - ptrenemy->last_meteor > 0.5f) {
-			PLAY_SOUND_BY_DIST(ptrenemy->shape.position, hit_rock_enemy_spacecraft)
-			if (--ptrenemy->life == 0) {
-				PLAY_SOUND_BY_DIST(ptrenemy->shape.position, destroyed_sound)
-				curr = next_enemy;
-				next_enemy = next_enemy->next;
-				list_remove(curr, &following);
-				continue;
+		if (collision_field) {
+			// penalty 
+			if (now - ptrenemy->last_asteroid_penalty > 1.0f) {
+				ptrenemy->penalties.collision = 1;
+				ptrenemy->has_penalty = 1;
+				ptrenemy->last_asteroid_penalty = now;
 			}
-			ptrenemy->last_meteor = now;
+			// enemy asteroid collision
+			if (collision_enemy_asteroids(ptrenemy) && now - ptrenemy->last_asteroid > 0.5f) {
+				PLAY_SOUND_BY_DIST(ptrenemy->shape.position, hit_asteroid_enemy_spacecraft)
+				if (--ptrenemy->life == 0) {
+					PLAY_SOUND_BY_DIST(ptrenemy->shape.position, destroyed_sound)
+					curr = next_enemy;
+					next_enemy = next_enemy->next;
+					list_remove(curr, &following);
+					continue;
+				}
+				ptrenemy->last_asteroid = now;
+			}
 		}
 		// enemy away from player or in the corners
-		now = GetTime();
 		if ((Vector3Distance(ptrenemy->shape.position, (Vector3){SPACESHIP_POS}) > 
 		     ptrenemy->dist + LIMIT_DISTANCE_TO_PLAYER ||
 		    fabs(ptrenemy->shape.position.x) > CORNER ||
@@ -797,9 +797,9 @@ void manage_enemies()
 						 ptrbullet->properties.position.y,
 						 ptrbullet->properties.position.z +
 						 ENEMY_BULLET_SPEED_PER_SECOND * GetFrameTime()};
-			// hit a meteor
-			if (collision_bullet_meteors(ptrbullet->properties.position, next_position, ENEMY_BULLET_SIZE)) {
-				PLAY_SOUND_BY_DIST(ptrbullet->properties.position, hit_rock_enemy_shot)
+			// hit a asteroid
+			if (collision_bullet_asteroids(ptrbullet->properties.position, next_position, ENEMY_BULLET_SIZE)) {
+				PLAY_SOUND_BY_DIST(ptrbullet->properties.position, hit_asteroid_enemy_shot)
 				for (i=0; i < MAX_CLASSES; i++)
 					current_error.y[i] = 0.0f;
 				current_error.y[GetRandomValue(0,3)] = 1.0f;
@@ -871,7 +871,7 @@ void manage_enemies()
 	for (next = following.first; next; next = next->next) {
 		ptrenemy = (struct enemy_spacecraft*)next->data;
 		curr_state[6] = curr_state[5] = curr_state[4] = DIAGONAL_MAP;
-		for (curr = rocks.first; curr; curr = curr->next) {
+		for (curr = asteroids.first; curr; curr = curr->next) {
 			aux = Vector3Distance(ptrenemy->shape.position,
 					      ((struct model*)curr->data)->position);
 			if (curr_state[4] > aux) {
@@ -980,7 +980,7 @@ void draw_scene()
 	float inc, limit, dist;
 	int i;
 
-	for (next = rocks.first; next; next = next->next) {
+	for (next = asteroids.first; next; next = next->next) {
 		draw_model = (struct model*)next->data;
 		DrawModelRotate(models[draw_model->model].drawing,
 				draw_model->position,
@@ -1054,7 +1054,7 @@ void draw_scene()
 		DrawSphere(*(Vector3*)next->data, ENEMY_BULLET_SIZE, RED);
 }
 
-collision_enemy_rocks(enemy)
+collision_enemy_asteroids(enemy)
 struct enemy_spacecraft *enemy;
 {
 	struct node *next, *next_box, *next_enemy_box;
@@ -1064,7 +1064,7 @@ struct enemy_spacecraft *enemy;
 	float new_scale, enew_scale;
 	
 	ecurrent = &enemy->shape;
-	for (next = rocks.first; next; next = next->next) {
+	for (next = asteroids.first; next; next = next->next) {
 		current = (struct model*)next->data;
 		collisions_list = &models[current->model].collision_list;
 		for (next_box = collisions_list->first; next_box; next_box = next_box->next) {
@@ -1083,7 +1083,7 @@ struct enemy_spacecraft *enemy;
 	return 0;
 }
 
-collision_enemy_field_rocks(enemy_pos, enemy_range)
+collision_enemy_field_asteroids(enemy_pos, enemy_range)
 Vector3 *enemy_pos;
 float enemy_range;
 {
@@ -1093,7 +1093,7 @@ float enemy_range;
 	Vector3 temp;
 	float new_scale;
 
-	for (next = rocks.first; next; next = next->next) {
+	for (next = asteroids.first; next; next = next->next) {
 		current = (struct model*)next->data;
 		collisions_list = &models[current->model].collision_list;
 		for (next_box = collisions_list->first; next_box; next_box = next_box->next) {

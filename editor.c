@@ -40,7 +40,7 @@ void load_models()
 	int i;
 	
 	i = 0;
-	strcpy(models[i].pathname, "models/rock1.glb");
+	strcpy(models[i].pathname, "models/asteroid1.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
 	strcpy(models[i].texturepath, "models/black-white-details-moon-texture.png");
 	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
@@ -52,7 +52,7 @@ void load_models()
 	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	
 	i++;
-	strcpy(models[i].pathname, "models/rock2.glb");
+	strcpy(models[i].pathname, "models/asteroid2.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
 	strcpy(models[i].texturepath, "models/black-stone-texture.png");
 	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
@@ -67,7 +67,7 @@ void load_models()
 	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 
 	i++;
-	strcpy(models[i].pathname, "models/rock3.glb");
+	strcpy(models[i].pathname, "models/asteroid3.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
 	strcpy(models[i].texturepath, "models/old-wall-texture.png");
 	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
