@@ -44,13 +44,19 @@
  * 'output': Specifies the index of the net that receives the output of the current net as input.
    (-1 indicates that the output is the last layer of the network)
  * */
-struct create_network {
+typedef struct {
 	unsigned *neurons_per_layer, num_layers, num_input;
 	unsigned char source;
 	short output;
-};
+} create_network, create_network_arr[], *create_network_ptr;
 
-extern float *network_output;
+typedef struct {
+	struct net *arr;
+	unsigned num_classes;
+	unsigned char back_on, num_nets;
+	float N;
+	float *network_output;
+} bignet, *bignet_ptr;
 
 /* hit:
  * 	Checks if the highest probability predicted by the net is equal to the expected 'class'.
@@ -59,67 +65,67 @@ extern float *network_output;
  * 	'predi' receives the class index predicted by the net.
  * 	'predv' receives the corresponding probability.
  * */
-float hit(int classidx, int *predi, float *predv);
+float hit(bignet_ptr model, int classidx, int *predi, float *predv);
 
 /* cross_entropy:
  * 	Calculates the Cross Entropy, measured in nats, of the net output.
  * 	'class' is the index of the expected class.
  * */
-float cross_entropy(int classidx);
+float cross_entropy(bignet_ptr model, int classidx);
 
 /* init_net_topology:
  * 	Uses 'nets' array to assemble the network.
  * 	'n' is the number of nets in the network.
  * 	If 'verbose' is true, it displays messages indicating the start and end.	
  * */
-void init_net_topology(struct create_network nets[], int n, int verbose);
+bignet_ptr init_net_topology(create_network_arr nets, int n, int verbose);
+
+/* load_weights:
+ * 	Reads `weights` file and loads the network.
+ * 	If 'verbose', displays messages indicating the start and end.
+ * */
+bignet_ptr load_weights(char file_name[], int verbose);
 
 /* init_random_weights:
  * 	Assigns random values to biases and weights of the network.
  * 	Is assumed that net has already been loaded into memory using 'load_weights' or
   	'init_net_topology' functions.
  * */
-void init_random_weights();
-
-/* load_weights:
- * 	Reads `weights` file and loads the network.
- * 	If 'verbose', displays messages indicating the start and end.
- * */
-void load_weights(char file_name[], int verbose);
+void init_random_weights(bignet_ptr model);
 
 /* save_weights:
  * 	Writes in file_name the network.
  * */
-void save_weights(char file_name[]);
+void save_weights(bignet_ptr model, char file_name[]);
 
 /* run:
  * 	Computes feedforward using 'img_view' and 'network_output' receives the output of the network.
  * */
-void run(float *img_view);
+void run(bignet_ptr model, float *flat_input);
 
 /* ini_backpr:
  * 	Allocates the necessary memory for backpropagation.
  * 	'n' is used to calculate the mean of the samples in one batch.
-  	If this is equal to 1, no mean is calculated.
+  	If this is equal to 1, no mean CAN be calculated.
  * */
-void ini_backpr(int n);
+void ini_backpr(bignet_ptr model, int n);
 
 /* clear_backpr:
  *	Clears the values stored during a backpropagation iteration.		
  * */
-void clear_backpr();
+void clear_backpr(bignet_ptr model);
 
 /* backpr:
  *	Performs the backpropagation using the sample 'img_view'.
  *	Prior to using this function, 'run' function needs to be executed.
  *	'expected' is the index of the expected class output.
  * */
-void backpr(float *img_view, float *expected);
+void backpr(bignet_ptr model, float *img_view, float *expected);
 
 /* apply_backpr:
  * 	Modifies the weights and biases using the gradients of error obtained from 'backpr' and applies momentum.
  * */
-void apply_backpr();
+void apply_backpr(bignet_ptr model);
 
 /* end_backpr:
  * 	Deallocates memory used during the backpropagation.

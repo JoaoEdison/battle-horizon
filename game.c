@@ -36,6 +36,7 @@
 struct enemy_spacecraft {
 	struct model shape;
 	float dist;
+	unsigned char head;
 	float last_shoot, last_asteroid_penalty, last_asteroid, last_shooted_penalty;
 	Color color;
 	int life;
@@ -57,9 +58,12 @@ struct shot {
 struct enemy_shot {
 	struct shot properties;
 	float state[INPUT_QTT];
+	unsigned char head;
 };
 
-struct list enemy_errors = { 0 };
+#define HEAD_COUNT 3
+
+struct list enemy_errors[HEAD_COUNT] = { 0 };
 struct enemy_error {
 	float x[INPUT_QTT], y[MAX_CLASSES];
 } current_error;
@@ -98,6 +102,8 @@ Light lights[MAX_LIGHTS];
 #define SUN_X   250.0f
 #define SUN_Y   150.0f
 #define SUN_Z (700.0f)
+
+bignet_ptr three_heads[HEAD_COUNT];
 
 main(argc, argv)
 char *argv[];
@@ -181,7 +187,7 @@ char *argv[];
 #ifdef PLAY
 	font = LoadFont("font/setback.png");
 	load_scores();
-	ToggleFullscreen();
+	//ToggleFullscreen();
 	current_screen = menu;
 #else
 	load_map(argv[1]);
@@ -314,7 +320,7 @@ void menu()
 			case 2:
 				load_map(easy_map? "data/easy.map" : "data/hard.map");
 				SetMousePosition(screen_width / 2, screen_height / 2);
-				DisableCursor();
+				//DisableCursor();
 
 				camera.position = (Vector3){ 0.0f, 5.0f, 0.0f };
 				camera.target = (Vector3){0.0f, 4.5f,-1.0f };
@@ -357,6 +363,7 @@ void game()
 	struct node *next;
 	struct enemy_error *ptrerr;
 	float now, prev_back;
+	int i, j;
 
 	prev_back = 0.0f;
 	UpdateMyCamera(&camera, GetFrameTime());
@@ -380,16 +387,17 @@ void game()
 #endif
 	now = GetTime();
 	if (now - prev_back > 5.0f) {
-		ini_backpr(enemy_errors.size);
-		clear_backpr();
-		for (next = enemy_errors.first; next; next = next->next) {
-			ptrerr = (struct enemy_error*)next->data;
-			backpr(ptrerr->x, ptrerr->y);
+		for (i=0; i < HEAD_COUNT; i++) {
+			three_heads[i]->N = enemy_errors[i].size;
+			clear_backpr(three_heads[i]);
+			for (next = enemy_errors[i].first; next; next = next->next) {
+				ptrerr = (struct enemy_error*)next->data;
+				backpr(three_heads[i], ptrerr->x, ptrerr->y);
+			}
+			while (enemy_errors[i].first)
+				list_remove(enemy_errors[i].first, &enemy_errors[i]);
+			apply_backpr(three_heads[i]);
 		}
-		while (enemy_errors.first)
-			list_remove(enemy_errors.first, &enemy_errors);
-		apply_backpr();
-		end_backpr();
 		prev_back = GetTime();
 	}
 	BeginDrawing();
@@ -412,15 +420,24 @@ void game()
 	EndDrawing();
 }
 
-unsigned layers1[] = {INPUT_QTT, 20, 10, 5};
-struct create_network nets[] = {{layers1, sizeof(layers1)/sizeof(unsigned), INPUT_QTT, 1, -1}};
+unsigned layers1[] = {INPUT_QTT, 20, 10, MAX_CLASSES};
+create_network_arr nets = {{layers1, sizeof(layers1)/sizeof(unsigned), INPUT_QTT, 1, -1}};
+
 void init_network()
 {
-	init_net_topology(nets, 1, 1);
+	int i;
+	
 	if (FileExists(WEIGHTS_LOCATION))
-		load_weights(WEIGHTS_LOCATION, 1);
+		for (i=0; i < HEAD_COUNT; i++) {
+			three_heads[i] = load_weights(WEIGHTS_LOCATION, 1);
+			ini_backpr(three_heads[i], 2);
+		}
 	else
-		init_random_weights();
+		for (i=0; i < HEAD_COUNT; i++) {
+			three_heads[i] = init_net_topology(nets, 1, 1);
+			init_random_weights(three_heads[i]);
+			ini_backpr(three_heads[i], 2);
+		}
 }
 
 void load_map(name)
@@ -560,7 +577,9 @@ void manage_player()
 					current_error.y[GetRandomValue(0,3)] = 1.0f;
 					for (i=0; i < INPUT_QTT; i++)
 						current_error.x[i] = ((struct enemy_spacecraft*)ptre->data)->last_state[i];
-					list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
+					list_insert(&current_error,
+						    &enemy_errors[((struct enemy_spacecraft*)ptre->data)->head],
+						    sizeof(struct enemy_error));
 				}
 				((struct enemy_spacecraft*)ptre->data)->last_shooted_penalty = now;
 				// damage
@@ -805,7 +824,9 @@ void manage_enemies()
 				current_error.y[GetRandomValue(0,3)] = 1.0f;
 				for (i=0; i < INPUT_QTT; i++)
 					current_error.x[i] = ptrbullet->state[i];
-				list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
+				list_insert(&current_error,
+					    &enemy_errors[ptrbullet->head],
+					    sizeof(struct enemy_error));
 				MOVE_LIGHT_SUN(ptrbullet->properties.light_idx)
 				curr = next;
 				next = next->next;
@@ -823,7 +844,7 @@ void manage_enemies()
 				current_error.y[4] = 1.0f;
 				for (i=0; i < INPUT_QTT; i++)
 					current_error.x[i] = ptrbullet->state[i];
-				list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
+				list_insert(&current_error, &enemy_errors[ptrbullet->head], sizeof(struct enemy_error));
 				MOVE_LIGHT_SUN(ptrbullet->properties.light_idx)
 				curr = next;
 				next = next->next;
@@ -842,7 +863,7 @@ void manage_enemies()
 			current_error.y[GetRandomValue(0,3)] = 1.0f;
 			for (i=0; i < INPUT_QTT; i++)
 				current_error.x[i] = ptrbullet->state[i];
-			list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
+			list_insert(&current_error, &enemy_errors[ptrbullet->head], sizeof(struct enemy_error));
 			MOVE_LIGHT_SUN(ptrbullet->properties.light_idx)
 			curr = next;
 			next = next->next;
@@ -859,7 +880,7 @@ void manage_enemies()
 				current_error.y[4] = 1.0f;
 			for (i=0; i < INPUT_QTT; i++)
 				current_error.x[i] = ptrenemy->last_state[i];
-			list_insert(&current_error, &enemy_errors, sizeof(struct enemy_error));
+			list_insert(&current_error, &enemy_errors[ptrenemy->head], sizeof(struct enemy_error));
 			ptrenemy->penalties.collision = 0; 
 			ptrenemy->penalties.dont_shoot = 0;
 			ptrenemy->penalties.dont_move = 0;
@@ -902,12 +923,12 @@ void manage_enemies()
 				curr_state[10] = aux;
 		}
 		curr_state[10] /= DIAGONAL_MAP;
-		run(curr_state);
+		run(three_heads[ptrenemy->head], curr_state);
 		for (i=0; i < INPUT_QTT; i++)
 			ptrenemy->last_state[i] = curr_state[i];
 		ptrenemy->has_penalty = 0;
 		
-		if (isnan(network_output[0])) {
+		if (isnan(three_heads[ptrenemy->head]->network_output[0])) {
 #ifdef PLAY
 			current_screen = menu;
 			return;
@@ -916,28 +937,28 @@ void manage_enemies()
 #endif
 		}
 
-		if (network_output[0] > .3f) {
+		if (three_heads[ptrenemy->head]->network_output[0] > .3f) {
 			ptrenemy->shape.position.x += VELOCITY_ENEMY * GetFrameTime();
 			if (ptrenemy->shape.position.x >  MAX_DIST-10.0f)
 				ptrenemy->shape.position.x =  MAX_DIST-10.0f;
 			else
 				moved = true;
 		}
-		if (network_output[1] > .3f) {
+		if (three_heads[ptrenemy->head]->network_output[1] > .3f) {
 			ptrenemy->shape.position.x -= VELOCITY_ENEMY * GetFrameTime();
 			if (ptrenemy->shape.position.x < -MAX_DIST+10.0f)
 				ptrenemy->shape.position.x = -MAX_DIST+10.0f;
 			else
 				moved = true;
 		}
-		if (network_output[2] > .3f) {
+		if (three_heads[ptrenemy->head]->network_output[2] > .3f) {
 			ptrenemy->shape.position.y += VELOCITY_ENEMY * GetFrameTime();
 			if (ptrenemy->shape.position.y >  MAX_DIST-10.0f)
 				ptrenemy->shape.position.y =  MAX_DIST-10.0f;
 			else
 				moved = true;
 		}
-		if (network_output[3] > .3f) {
+		if (three_heads[ptrenemy->head]->network_output[3] > .3f) {
 			ptrenemy->shape.position.y -= VELOCITY_ENEMY * GetFrameTime();
 			if (ptrenemy->shape.position.y <  -MAX_DIST+10.0f)
 				ptrenemy->shape.position.y =  -MAX_DIST+10.0f;
@@ -951,7 +972,7 @@ void manage_enemies()
 			ptrenemy->has_penalty = 1;
 			ptrenemy->last_move = now;
 		}
-		if (network_output[4] > .3f) {
+		if (three_heads[ptrenemy->head]->network_output[4] > .3f) {
 			if (now - ptrenemy->last_shoot > 1.0f / FIRING_RATE_PER_SECOND)	{
 				ptrenemy->last_shoot = now;
 				new_shot.properties.position = ptrenemy->shape.position;
@@ -961,6 +982,7 @@ void manage_enemies()
 				lights[new_shot.properties.light_idx].position = new_shot.properties.position;
 				for (i=0; i < INPUT_QTT; i++)
 					new_shot.state[i] = ptrenemy->last_state[i];
+				new_shot.head = ptrenemy->head;
 				list_insert(&new_shot, &enemy_bullets, sizeof(struct enemy_shot));
 				PLAY_SOUND_BY_DIST(new_shot.properties.position, enemy_shot_sound);
 			}
@@ -1003,6 +1025,7 @@ void draw_scene()
 		if (draw_model->position.z + limit - camera.target.z >= .0f) {
 			new_enemy.shape = enemies[i];
 			new_enemy.dist = camera.target.z - enemies[i].position.z;
+			new_enemy.head = GetRandomValue(0, 2);
 			list_insert(&new_enemy, &following, sizeof(struct enemy_spacecraft));
 			first_enemy++;
 			continue;
