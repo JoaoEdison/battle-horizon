@@ -61,7 +61,9 @@ struct enemy_shot {
 	unsigned char head;
 };
 
-#define HEAD_COUNT 3
+#define WEIGHTS_LOCATION "data/weights"
+
+bignet_ptr three_heads[HEAD_COUNT];
 
 struct list enemy_errors[HEAD_COUNT] = { 0 };
 struct enemy_error {
@@ -78,7 +80,7 @@ struct enemy_spacecraft new_enemy;
 
 int screen_width, screen_height;
 Camera camera;
-Model mod_spaceship;
+Model mod_spaceship, mod_skybox;
 BoundingBox new_spaceship1, new_spaceship2;
 void (*current_screen)();
 bool exit_game = false;
@@ -92,23 +94,19 @@ struct sound_I {
 
 Sound shot_sound, victory_sound, defeat_sound, hit_player, collision_sound;
 
-#define WEIGHTS_LOCATION "data/weights"
-
-Shader shader;
+Shader shader, shader_cubemap;
 Light lights[MAX_LIGHTS];
 
 #define MODEL_COLOR WHITE
 
-#define SUN_X   250.0f
-#define SUN_Y   150.0f
+#define SUN_X   380.0f
+#define SUN_Y   320.0f
 #define SUN_Z (700.0f)
-
-bignet_ptr three_heads[HEAD_COUNT];
 
 main(argc, argv)
 char *argv[];
 {
-	void load_map(), unload_map(), init_network(), menu(), game();
+	void load_map(), unload_map(), init_network(), menu(), game(), load_skybox();
 	int i;
 #ifdef PLAY
 	void load_scores(), save_scores();
@@ -167,7 +165,8 @@ char *argv[];
 	enemy_shot_sound.P = 12.0f;
 	destroyed_sound.sound = LoadSound("sounds/enemy-destroyed.mp3");
 	destroyed_sound.P = 12.0f;
-
+	
+	load_skybox();	
 	mod_spaceship = LoadModel("models/spacecraft.glb");
 	//shaders
 	shader = LoadShader("shaders/lighting.vs", "shaders/lighting.fs");
@@ -187,7 +186,7 @@ char *argv[];
 #ifdef PLAY
 	font = LoadFont("font/setback.png");
 	load_scores();
-	//ToggleFullscreen();
+	ToggleFullscreen();
 	current_screen = menu;
 #else
 	load_map(argv[1]);
@@ -320,7 +319,7 @@ void menu()
 			case 2:
 				load_map(easy_map? "data/easy.map" : "data/hard.map");
 				SetMousePosition(screen_width / 2, screen_height / 2);
-				//DisableCursor();
+				DisableCursor();
 
 				camera.position = (Vector3){ 0.0f, 5.0f, 0.0f };
 				camera.target = (Vector3){0.0f, 4.5f,-1.0f };
@@ -363,7 +362,7 @@ void game()
 	struct node *next;
 	struct enemy_error *ptrerr;
 	float now, prev_back;
-	int i, j;
+	int i;
 
 	prev_back = 0.0f;
 	UpdateMyCamera(&camera, GetFrameTime());
@@ -1002,6 +1001,12 @@ void draw_scene()
 	float inc, limit, dist;
 	int i;
 
+	rlDisableBackfaceCulling();
+	rlDisableDepthMask();
+		DrawModel(mod_skybox, (Vector3){0}, 1.0f, WHITE);
+	rlEnableBackfaceCulling();
+	rlEnableDepthMask();
+
 	for (next = asteroids.first; next; next = next->next) {
 		draw_model = (struct model*)next->data;
 		DrawModelRotate(models[draw_model->model].drawing,
@@ -1065,7 +1070,6 @@ void draw_scene()
 			                  ((struct enemy_spacecraft*)next->data)->dist + LIMIT_DISTANCE_TO_PLAYER? RED : BLUE);
 #endif
 	}
-	DrawSphere((Vector3){camera.position.x + SUN_X, camera.position.y + SUN_Y, camera.position.z + SUN_Z}, 100.0f, YELLOW);
 	DrawModel(mod_spaceship, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, MODEL_COLOR);
 	for (next = shots.first; next; next = next->next) {
 		aux_bullet = new_bullet = *(Vector3*)next->data;
@@ -1138,4 +1142,34 @@ find_light()
 		if (lights[i].position.x == SUN_X)
 			return i;
 	return -1;
+}
+
+/*******************************************************************************************
+*
+*   raylib [models] example - Skybox loading and drawing
+*
+*   Example originally created with raylib 1.8, last time updated with raylib 4.0
+*
+*   Example licensed under an unmodified zlib/libpng license, which is an OSI-certified,
+*   BSD-like license that allows static linking with closed source software
+*
+*   Copyright (c) 2017-2023 Ramon Santamaria (@raysan5)
+*
+********************************************************************************************/
+void load_skybox()
+{
+	mod_skybox = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
+	mod_skybox.materials[0].shader = LoadShader("shaders/skybox.vs", "shaders/skybox.fs");
+
+	SetShaderValue(mod_skybox.materials[0].shader, GetShaderLocation(mod_skybox.materials[0].shader, "environmentMap"), (int[1]){ MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
+	SetShaderValue(mod_skybox.materials[0].shader, GetShaderLocation(mod_skybox.materials[0].shader, "doGamma"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
+	SetShaderValue(mod_skybox.materials[0].shader, GetShaderLocation(mod_skybox.materials[0].shader, "vflipped"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
+	
+	Shader shader_cubemap = LoadShader("shaders/cubemap.vs", "shaders/cubemap.fs");
+
+	SetShaderValue(shader_cubemap, GetShaderLocation(shader_cubemap, "equirectangularMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
+
+	Image img = LoadImage("models/cubemap.png");
+	mod_skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);    // CUBEMAP_LAYOUT_PANORAMA
+	UnloadImage(img);
 }
