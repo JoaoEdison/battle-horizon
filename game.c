@@ -1,13 +1,13 @@
 /*
-  Spacecraft is a 3D space battle game in Raylib
+  Battle Horizon is a 3D space battle game in Raylib
   Copyright (C) 2023  João Edison Roso Manica
   
-  Spacecraft is free software; you can redistribute it and/or modify
+  Battle Horizon is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
   (at your option) any later version.
   
-  Spacecraft is distributed in the hope that it will be useful,
+  Battle Horizon is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
@@ -21,14 +21,13 @@
 #include "defs.h"
 #include "ai/neural_img.h"
 #include "ui.c"
-#include "spacecraft.c"
+#include "battle-horizon.c"
 #define RLIGHTS_IMPLEMENTATION
 #include "shaders/rlights.h"
 
 #define PLAY
 
 /* TODO:
- * change the name of the game...
  * ammunition;
  * fix errors.
  * */
