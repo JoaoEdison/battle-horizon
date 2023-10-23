@@ -1,6 +1,6 @@
 /* Portuguese Version */
 
-char t_t_game[] = "Horizonte de Batalhas";
+char t_t_game[] = "Horizonte de Batalha";
 
 char t_m_win[] = "VOCE VENCEU";
 char t_m_lost[] = "VOCE PERDEU";
@@ -12,6 +12,6 @@ char t_m_about_header[] = "Sobre o Jogo";
 char t_m_easy[] = "Facil";
 char t_m_hard[] = "Dificil";
 
-char text_about[] = "Horizonte de Batalhas eh um jogo de batalha espacial desenvolvido no motor de jogo Raylib.";
+char text_about[] = "Horizonte de Batalha eh um jogo de batalha espacial desenvolvido no motor de jogo Raylib.";
 
 #define T_M_NAME "nome";

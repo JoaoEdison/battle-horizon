@@ -10,7 +10,7 @@
 The game was built on top of the Raylib game engine and uses my own neural network (OCRC) for the movement and attack of enemy spaceships. This game is a college assignment in the Computer Graphics and Virtual Reality discipline at UPF. Taught by Prof. Dr. Rafael Rieder.
 
 <div align="center">
-  <h1>Horizonte de Batalhas</h1>
+  <h1>Horizonte de Batalha</h1>
   Jogo 3D de batalha espacial em Raylib
 </div>
 
