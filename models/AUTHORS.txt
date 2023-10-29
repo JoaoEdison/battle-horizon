@@ -1,7 +1,5 @@
-asteroid3:
-modified from:
-	Low Poly Crystals (https://sketchfab.com/3d-models/low-poly-crystals-4a6320d8c4d243eebfe6b83e67511073u)
-	by elliothunter72 (https://sketchfab.com/elliothunter72)
+asteroid3: elliothunter72 (https://sketchfab.com/elliothunter72)
+modified from: https://sketchfab.com/3d-models/low-poly-crystals-4a6320d8c4d243eebfe6b83e67511073
 	is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/)
 
 Textures used on asteroids:
