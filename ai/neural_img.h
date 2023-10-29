@@ -130,4 +130,4 @@ void apply_backpr(bignet_ptr model);
 /* end_backpr:
  * 	Deallocates memory used during the backpropagation.
  * */
-void end_backpr();
+void end_backpr(bignet_ptr model);

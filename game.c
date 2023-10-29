@@ -614,14 +614,14 @@ void manage_player()
 		new_bullet.position.z = camera.target.z - 0.62 - .4f / 2;
 		new_bullet.light_idx = find_light();
 		lights[new_bullet.light_idx].position = new_bullet.position;
-		lights[new_bullet.light_idx].color = ORANGE;
+		lights[new_bullet.light_idx].color = PLAYER_BULLET_COLOR;
 		list_insert(&new_bullet, &shots, sizeof(struct shot));
 		new_bullet.position.x += 3.22f;
 		new_bullet.position.y -= 0.05f;
 		new_bullet.position.z -= 0.03f;
 		new_bullet.light_idx = find_light();
 		lights[new_bullet.light_idx].position = new_bullet.position;
-		lights[new_bullet.light_idx].color = ORANGE;
+		lights[new_bullet.light_idx].color = PLAYER_BULLET_COLOR;
 		list_insert(&new_bullet, &shots, sizeof(struct shot));
 		prev_time = GetTime();
 #ifdef PLAY
@@ -663,6 +663,9 @@ float R, r;
 	Vector3 U, Q;
 	float a, b, c, d;
 	
+	/*if object is slow, send to standard collision check*/	
+	if (R > BULLET_SPEED_PER_SECOND / 60)
+		return CheckCollisionSpheres(*p2, r, *C, R);
 	// true radius 
 	R += r;
 	U = Vector3Normalize(Vector3Subtract(*p2, *p1));
@@ -976,7 +979,7 @@ void manage_enemies()
 				new_shot.properties.position = ptrenemy->shape.position;
 				new_shot.properties.position.z += 2.0f;
 				new_shot.properties.light_idx = find_light();
-				lights[new_shot.properties.light_idx].color = RED;
+				lights[new_shot.properties.light_idx].color = ENEMY_BULLET_COLOR;
 				lights[new_shot.properties.light_idx].position = new_shot.properties.position;
 				for (i=0; i < INPUT_QTT; i++)
 					new_shot.state[i] = ptrenemy->last_state[i];
@@ -1074,10 +1077,10 @@ void draw_scene()
 		aux_bullet = new_bullet = *(Vector3*)next->data;
 		new_bullet.z += .2f;
 		aux_bullet.z -= .4f;
-		DrawCapsule(new_bullet, aux_bullet, .125f, 4, 4, ORANGE);
+		DrawCapsule(new_bullet, aux_bullet, .125f, 4, 4, PLAYER_BULLET_COLOR);
 	}
 	for (next = enemy_bullets.first; next; next = next->next)
-		DrawSphere(*(Vector3*)next->data, ENEMY_BULLET_SIZE, RED);
+		DrawSphere(*(Vector3*)next->data, ENEMY_BULLET_SIZE, ENEMY_BULLET_COLOR);
 }
 
 collision_enemy_asteroids(enemy)

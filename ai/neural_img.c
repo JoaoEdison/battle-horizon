@@ -148,6 +148,7 @@ float *flat_input, *expected;
 	float *ptrberr;
 	int i, next_col;
 	
+	run(model, flat_input);
 	/*begins in the last inputs, because is being traversed backwards*/	
 	flat_input += INPUT_QTT;
 	next_col = 0;	
@@ -384,7 +385,7 @@ char file_name[];
 		fputc('\n', fp);
 	}
 	if (model->back_on)
-		end_backpr();
+		end_backpr(model);
 	for (ptrn=model->arr; ptrn < model->arr + model->num_nets; ptrn++) {
 		for (i=0, ptrl=ptrn->arr; i < ptrn->num_layers; ptrl++, i++) {
 			for (j=0; j < ptrl->n; j++) {
