@@ -16,8 +16,8 @@
   with this program; If not, see <http://www.gnu.org/licenses/>
 */
 #include <stdio.h>
-#include "raylib.h"
-#include "raymath.h"
+#include <raylib.h>
+#include <raymath.h>
 #include "defs.h"
 #include "ai/neural_img.h"
 #include "ui.c"
@@ -82,7 +82,7 @@ Camera camera;
 Model mod_spaceship, mod_skybox;
 BoundingBox new_spaceship1, new_spaceship2;
 void (*current_screen)();
-bool exit_game = false;
+bool exit_game = 0;
 
 struct sound_I {
 	Sound sound;
@@ -93,7 +93,7 @@ struct sound_I {
 
 Sound shot_sound, victory_sound, defeat_sound, hit_player, collision_sound;
 
-Shader shader, shader_cubemap;
+Shader shader_cubemap, shader_light;
 Light lights[MAX_LIGHTS];
 
 #define MODEL_COLOR WHITE
@@ -165,22 +165,20 @@ char *argv[];
 	destroyed_sound.sound = LoadSound("sounds/enemy-destroyed.mp3");
 	destroyed_sound.P = 12.0f;
 	
-	load_skybox();	
 	mod_spaceship = LoadModel("models/spacecraft.glb");
 	//shaders
-	shader = LoadShader("shaders/lighting.vs", "shaders/lighting.fs");
-	shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
-	//int ambientLoc = GetShaderLocation(shader, "ambient");
-	//SetShaderValue(shader, ambientLoc, (float[4]){0.1f, 0.1f, 0.1f, 1.0f}, SHADER_UNIFORM_VEC4);
+	load_skybox();	
+	shader_light = LoadShader("shaders/lighting.vs", "shaders/lighting.fs");
+	shader_light.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader_light, "viewPos");
 	for (i=0; i < mod_spaceship.materialCount; i++)
-		mod_spaceship.materials[i].shader = shader;
+		mod_spaceship.materials[i].shader = shader_light;
 	// create directional light facing 0,0,0	
-	CreateLight(LIGHT_DIRECTIONAL, (Vector3){SUN_X, SUN_Y, SUN_Z}, Vector3Zero(), WHITE, shader);
+	lights[0] = CreateLight(LIGHT_DIRECTIONAL, (Vector3){SUN_X, SUN_Y, SUN_Z}, Vector3Zero(), WHITE, shader_light);
+	lights[0].enabled = 1;
+	UpdateLightValues(shader_light, lights[0]);
 	// create all possible lights in sun
 	for (i=1; i < MAX_LIGHTS; i++)
-		lights[i] = CreateLight(LIGHT_POINT, (Vector3){SUN_X, SUN_Y, SUN_Z}, Vector3Zero(), WHITE, shader);
-	SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], (float[3]){SUN_X, SUN_Y, SUN_Z}, SHADER_UNIFORM_VEC3);
-
+		lights[i] = CreateLight(LIGHT_POINT, Vector3Zero(), Vector3Zero(), WHITE, shader_light);
 	SetTargetFPS(60);
 #ifdef PLAY
 	font = LoadFont("font/setback.png");
@@ -228,11 +226,6 @@ void *x, *y;
 {
 	return ((struct model*)y)->position.z - ((struct model*)x)->position.z;
 }
-
-#define MOVE_LIGHT_SUN(IDX) \
-		lights[IDX].position = (Vector3){SUN_X, SUN_Y, SUN_Z}; \
-		lights[IDX].color = WHITE; \
-		UpdateLightValues(shader, lights[IDX]);
 
 #ifdef PLAY
 void load_scores()
@@ -304,6 +297,7 @@ int screen = 0;
 void menu()
 {
 	void game(), load_map();
+	int i;
 
 	BeginDrawing();
 		ClearBackground(BLACK);
@@ -329,13 +323,13 @@ void menu()
 				game_state.score = total_enemies * ENEMY_LIFE * SCORE_PER_SHOT * 2;
 				while (following.first)
 					list_remove(following.first, &following);
-				while (enemy_bullets.first) {
-					MOVE_LIGHT_SUN(((struct enemy_shot *)enemy_bullets.first->data)->properties.light_idx)
+				while (enemy_bullets.first)
 					list_remove(enemy_bullets.first, &enemy_bullets);
-				}
-				while (shots.first) {
-					MOVE_LIGHT_SUN(((struct shot *)shots.first->data)->light_idx)
+				while (shots.first)
 					list_remove(shots.first, &shots);
+				for (i=1; i < MAX_LIGHTS; i++) {
+					lights[i].enabled = 0;
+					UpdateLightValues(shader_light, lights[i]);
 				}
 				first_enemy = 0;
 				game_state.time = GetTime();
@@ -345,7 +339,7 @@ void menu()
 				screen = draw_about(screen_width, screen_height);
 				break;
 			case 4:
-				exit_game = true;
+				exit_game = 1;
 				break;
 			default:
 				screen = draw_menu(screen_width, screen_height);
@@ -368,6 +362,7 @@ void game()
 	
 	manage_player();	
 	manage_enemies();
+	SetShaderValue(shader_light, shader_light.locs[SHADER_LOC_VECTOR_VIEW], (float[3]){camera.position.x, camera.position.y, camera.position.z}, SHADER_UNIFORM_VEC3);
 #ifdef PLAY
 	if (!game_state.state) {
 		if (GetTime() - game_state.time >= DEADLINE_SECS-1.0f)
@@ -456,7 +451,7 @@ char name[];
 		if (models[i].has_texture)
 			models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
 		for (k=0; k < models[i].drawing.materialCount; k++)
-			models[i].drawing.materials[k].shader = shader;	
+			models[i].drawing.materials[k].shader = shader_light;	
 		if (strstr(models[i].pathname, "enemy"))
 			enemy_idx = i;
 		models[i].collision_list.first = NULL;
@@ -504,10 +499,16 @@ void unload_map()
 }
 
 #define SPACESHIP_POS camera.target.x, camera.target.y - 1.8f, camera.target.z + 0.5f
+
 #define PLAY_SOUND_BY_DIST(POINT, SOUND) \
 			float I = SOUND.P / Vector3Distance(POINT, (Vector3){SPACESHIP_POS}); \
 			SetSoundVolume(SOUND.sound, I); \
 			PlaySound(SOUND.sound);
+
+#define DISABLE_LIGHT(LIGHT) \
+	lights[LIGHT].enabled = 0; \
+	UpdateLightValues(shader_light, lights[LIGHT]); \
+	LIGHT = 0;
 
 void manage_player()
 {
@@ -543,11 +544,11 @@ void manage_player()
 	collision = collision_spacecraft_asteroids();
 	if (collision && !prev_collision) {
 		PlaySound(collision_sound);
-		prev_collision = true;
+		prev_collision = 1;
 		game_state.life--;
 	}
 	if (!collision)
-		prev_collision = false;
+		prev_collision = 0;
 	/*player shots*/
 	for (next = shots.first; next;) {
 		ptrbullet = (struct shot *)next->data;
@@ -558,9 +559,11 @@ void manage_player()
 						 ptrbullet->position.z -
 						 BULLET_SPEED_PER_SECOND * GetFrameTime()};
 			/*bullets collisions*/
-			if (collision_bullet_asteroids(ptrbullet->position, next_position, PLAYER_BULLET_SIZE)) {
+			if (collision_bullet_asteroids(&ptrbullet->position, &next_position, PLAYER_BULLET_SIZE)) {
 				PLAY_SOUND_BY_DIST(ptrbullet->position, hit_asteroid_player_shot)
-				MOVE_LIGHT_SUN(ptrbullet->light_idx)
+				if (ptrbullet->light_idx > 0) {
+					DISABLE_LIGHT(ptrbullet->light_idx)
+				}
 				curr = next;
 				next = next->next;
 				list_remove(curr, &shots);
@@ -587,20 +590,26 @@ void manage_player()
 						PLAY_SOUND_BY_DIST(((struct enemy_spacecraft*)ptre->data)->shape.position, destroyed_sound)
 						list_remove(ptre, &following);
 					}
-					MOVE_LIGHT_SUN(ptrbullet->light_idx)
+					if (ptrbullet->light_idx > 0) {
+						DISABLE_LIGHT(ptrbullet->light_idx)
+					}
 					curr = next;
 					next = next->next;
 					list_remove(curr, &shots);
 					continue;
 				}
 			}
-			ptrbullet->position.z -= BULLET_SPEED_PER_SECOND * GetFrameTime();
-
-			lights[ptrbullet->light_idx].position = ptrbullet->position;
-			UpdateLightValues(shader, lights[ptrbullet->light_idx]);
+			ptrbullet->position = next_position;
+			if (ptrbullet->light_idx > 0) {
+				if (ptrbullet->position.z > camera.position.z - 2*DISTANCE_FROM_PLAYER) {
+					lights[ptrbullet->light_idx].position = ptrbullet->position;
+					UpdateLightValues(shader_light, lights[ptrbullet->light_idx]);
+				} else if (lights[ptrbullet->light_idx].enabled) {
+					DISABLE_LIGHT(ptrbullet->light_idx)
+				}
+			}
 			next = next->next;
 		} else {
-			MOVE_LIGHT_SUN(ptrbullet->light_idx)
 			curr = next;
 			next = next->next;
 			list_remove(curr, &shots);
@@ -613,15 +622,15 @@ void manage_player()
 		new_bullet.position.y = camera.target.y - 1.926f;
 		new_bullet.position.z = camera.target.z - 0.62 - .4f / 2;
 		new_bullet.light_idx = find_light();
-		lights[new_bullet.light_idx].position = new_bullet.position;
 		lights[new_bullet.light_idx].color = PLAYER_BULLET_COLOR;
+		lights[new_bullet.light_idx].enabled = 1;
 		list_insert(&new_bullet, &shots, sizeof(struct shot));
 		new_bullet.position.x += 3.22f;
 		new_bullet.position.y -= 0.05f;
 		new_bullet.position.z -= 0.03f;
 		new_bullet.light_idx = find_light();
-		lights[new_bullet.light_idx].position = new_bullet.position;
 		lights[new_bullet.light_idx].color = PLAYER_BULLET_COLOR;
+		lights[new_bullet.light_idx].enabled = 1;
 		list_insert(&new_bullet, &shots, sizeof(struct shot));
 		prev_time = GetTime();
 #ifdef PLAY
@@ -682,23 +691,19 @@ float R, r;
 }
 
 collision_bullet_asteroids(bullet_prev, bullet_after, size)
-Vector3 bullet_prev, bullet_after;
+Vector3 *bullet_prev, *bullet_after;
 float size;
 {
 	struct node *next, *next_box;
-	struct list *collisions_list;
 	struct model *ptrm, *current;
 	Vector3 temp;
-	float new_scale;
 
 	for (next = asteroids.first; next; next = next->next) {
 		current = (struct model*)next->data;
-		collisions_list = &models[current->model].collision_list;
-		for (next_box = collisions_list->first; next_box; next_box = next_box->next) {
+		for (next_box = models[current->model].collision_list.first; next_box; next_box = next_box->next) {
 			ptrm = (struct model*)next_box->data;
-			new_scale = ptrm->scale * current->scale;
 			temp = TRANFORM_SPHERE(current, ptrm->position);
-			if (check_collision_sphere_line(&bullet_prev, &bullet_after, &temp, new_scale, size))
+			if (check_collision_sphere_line(bullet_prev, bullet_after, &temp, ptrm->scale * current->scale, size))
 				return 1;
 		}
 	}
@@ -770,12 +775,13 @@ void manage_enemies()
 	bool moved, collision_field;
 	int i;
 	struct enemy_shot new_shot, *ptrbullet;
+	struct model *asteroid;
 	Vector3 next_position;
 	
 	for (next_enemy = following.first; next_enemy;) {
-		moved = false;
+		moved = 0;
 		ptrenemy = (struct enemy_spacecraft*)next_enemy->data;
-		collision_field = collision_enemy_field_asteroids(&ptrenemy->shape.position, ptrenemy->shape.scale * ENEMY_FIELD);
+		collision_field = collision_enemy_field_asteroids(&ptrenemy->shape.position, ptrenemy->shape.scale * ENEMY_FIELD, &asteroid);
 		now = GetTime();
 		if (collision_field) {
 			// penalty 
@@ -785,17 +791,18 @@ void manage_enemies()
 				ptrenemy->last_asteroid_penalty = now;
 			}
 			// enemy asteroid collision
-			if (collision_enemy_asteroids(ptrenemy) && now - ptrenemy->last_asteroid > 0.5f) {
-				PLAY_SOUND_BY_DIST(ptrenemy->shape.position, hit_asteroid_enemy_spacecraft)
-				if (--ptrenemy->life == 0) {
-					PLAY_SOUND_BY_DIST(ptrenemy->shape.position, destroyed_sound)
-					curr = next_enemy;
-					next_enemy = next_enemy->next;
-					list_remove(curr, &following);
-					continue;
+			if (now - ptrenemy->last_asteroid > 0.5f)
+				if (collision_enemy_asteroid(ptrenemy, asteroid)) {
+					PLAY_SOUND_BY_DIST(ptrenemy->shape.position, hit_asteroid_enemy_spacecraft)
+					if (--ptrenemy->life == 0) {
+						PLAY_SOUND_BY_DIST(ptrenemy->shape.position, destroyed_sound)
+						curr = next_enemy;
+						next_enemy = next_enemy->next;
+						list_remove(curr, &following);
+						continue;
+					}
+					ptrenemy->last_asteroid = now;
 				}
-				ptrenemy->last_asteroid = now;
-			}
 		}
 		// enemy away from player or in the corners
 		if ((Vector3Distance(ptrenemy->shape.position, (Vector3){SPACESHIP_POS}) > 
@@ -818,7 +825,7 @@ void manage_enemies()
 						 ptrbullet->properties.position.z +
 						 ENEMY_BULLET_SPEED_PER_SECOND * GetFrameTime()};
 			// hit a asteroid
-			if (collision_bullet_asteroids(ptrbullet->properties.position, next_position, ENEMY_BULLET_SIZE)) {
+			if (collision_bullet_asteroids(&ptrbullet->properties.position, &next_position, ENEMY_BULLET_SIZE)) {
 				PLAY_SOUND_BY_DIST(ptrbullet->properties.position, hit_asteroid_enemy_shot)
 				for (i=0; i < MAX_CLASSES; i++)
 					current_error.y[i] = 0.0f;
@@ -828,7 +835,9 @@ void manage_enemies()
 				list_insert(&current_error,
 					    &enemy_errors[ptrbullet->head],
 					    sizeof(struct enemy_error));
-				MOVE_LIGHT_SUN(ptrbullet->properties.light_idx)
+				if (ptrbullet->properties.light_idx > 0) {
+					DISABLE_LIGHT(ptrbullet->properties.light_idx)
+				}
 				curr = next;
 				next = next->next;
 				list_remove(curr, &enemy_bullets);
@@ -846,16 +855,24 @@ void manage_enemies()
 				for (i=0; i < INPUT_QTT; i++)
 					current_error.x[i] = ptrbullet->state[i];
 				list_insert(&current_error, &enemy_errors[ptrbullet->head], sizeof(struct enemy_error));
-				MOVE_LIGHT_SUN(ptrbullet->properties.light_idx)
+				if (ptrbullet->properties.light_idx > 0) {
+					DISABLE_LIGHT(ptrbullet->properties.light_idx)
+				}
 				curr = next;
 				next = next->next;
 				list_remove(curr, &enemy_bullets);
 				continue;
 			}
-			ptrbullet->properties.position.z += ENEMY_BULLET_SPEED_PER_SECOND * GetFrameTime();
-
-			lights[ptrbullet->properties.light_idx].position = ptrbullet->properties.position;
-			UpdateLightValues(shader, lights[ptrbullet->properties.light_idx]);
+			ptrbullet->properties.position = next_position;
+			
+			if (ptrbullet->properties.light_idx > 0) {
+				if (ptrbullet->properties.position.z < camera.position.z + 2*DISTANCE_FROM_PLAYER) {
+					lights[ptrbullet->properties.light_idx].position = ptrbullet->properties.position;
+					UpdateLightValues(shader_light, lights[ptrbullet->properties.light_idx]);
+				} else if (lights[ptrbullet->properties.light_idx].enabled) {
+					DISABLE_LIGHT(ptrbullet->properties.light_idx)
+				}
+			}
 			next = next->next;
 		} else {
 			// bullet crossed the map
@@ -865,7 +882,6 @@ void manage_enemies()
 			for (i=0; i < INPUT_QTT; i++)
 				current_error.x[i] = ptrbullet->state[i];
 			list_insert(&current_error, &enemy_errors[ptrbullet->head], sizeof(struct enemy_error));
-			MOVE_LIGHT_SUN(ptrbullet->properties.light_idx)
 			curr = next;
 			next = next->next;
 			list_remove(curr, &enemy_bullets);
@@ -943,28 +959,28 @@ void manage_enemies()
 			if (ptrenemy->shape.position.x >  MAX_DIST-10.0f)
 				ptrenemy->shape.position.x =  MAX_DIST-10.0f;
 			else
-				moved = true;
+				moved = 1;
 		}
 		if (three_heads[ptrenemy->head]->network_output[1] > .3f) {
 			ptrenemy->shape.position.x -= VELOCITY_ENEMY * GetFrameTime();
 			if (ptrenemy->shape.position.x < -MAX_DIST+10.0f)
 				ptrenemy->shape.position.x = -MAX_DIST+10.0f;
 			else
-				moved = true;
+				moved = 1;
 		}
 		if (three_heads[ptrenemy->head]->network_output[2] > .3f) {
 			ptrenemy->shape.position.y += VELOCITY_ENEMY * GetFrameTime();
 			if (ptrenemy->shape.position.y >  MAX_DIST-10.0f)
 				ptrenemy->shape.position.y =  MAX_DIST-10.0f;
 			else
-				moved = true;
+				moved = 1;
 		}
 		if (three_heads[ptrenemy->head]->network_output[3] > .3f) {
 			ptrenemy->shape.position.y -= VELOCITY_ENEMY * GetFrameTime();
 			if (ptrenemy->shape.position.y <  -MAX_DIST+10.0f)
 				ptrenemy->shape.position.y =  -MAX_DIST+10.0f;
 			else
-				moved = true;
+				moved = 1;
 		}
 		/*shot*/
 		now = GetTime();
@@ -980,7 +996,7 @@ void manage_enemies()
 				new_shot.properties.position.z += 2.0f;
 				new_shot.properties.light_idx = find_light();
 				lights[new_shot.properties.light_idx].color = ENEMY_BULLET_COLOR;
-				lights[new_shot.properties.light_idx].position = new_shot.properties.position;
+				lights[new_shot.properties.light_idx].enabled = 1;
 				for (i=0; i < INPUT_QTT; i++)
 					new_shot.state[i] = ptrenemy->last_state[i];
 				new_shot.head = ptrenemy->head;
@@ -1083,66 +1099,68 @@ void draw_scene()
 		DrawSphere(*(Vector3*)next->data, ENEMY_BULLET_SIZE, ENEMY_BULLET_COLOR);
 }
 
-collision_enemy_asteroids(enemy)
+collision_enemy_asteroid(enemy, asteroid)
 struct enemy_spacecraft *enemy;
+struct model *asteroid;
 {
-	struct node *next, *next_box, *next_enemy_box;
-	struct list *collisions_list;
-	struct model *ptrm, *current, *eptrm, *ecurrent;
+	struct node *next, *next_enemy_box;
+	struct model *ptrm, *eptrm, *ecurrent;
 	Vector3 temp, etemp;
 	float new_scale, enew_scale;
 	
 	ecurrent = &enemy->shape;
-	for (next = asteroids.first; next; next = next->next) {
-		current = (struct model*)next->data;
-		collisions_list = &models[current->model].collision_list;
-		for (next_box = collisions_list->first; next_box; next_box = next_box->next) {
-			ptrm = (struct model*)next_box->data;
-			new_scale = ptrm->scale * current->scale;
-			temp = TRANFORM_SPHERE(current, ptrm->position);
-			for (next_enemy_box = models[enemy->shape.model].collision_list.first; next_enemy_box; next_enemy_box = next_enemy_box->next) {
-				eptrm = (struct model*)next_box->data;
-				enew_scale = eptrm->scale * enemy->shape.scale;
-				etemp = TRANFORM_SPHERE(ecurrent, eptrm->position);
-				if (CheckCollisionSpheres(temp, new_scale, etemp, enew_scale))
-					return 1;
-			}
-		}
-	}
-	return 0;
-}
-
-collision_enemy_field_asteroids(enemy_pos, enemy_range)
-Vector3 *enemy_pos;
-float enemy_range;
-{
-	struct node *next, *next_box;
-	struct list *collisions_list;
-	struct model *ptrm, *current;
-	Vector3 temp;
-	float new_scale;
-
-	for (next = asteroids.first; next; next = next->next) {
-		current = (struct model*)next->data;
-		collisions_list = &models[current->model].collision_list;
-		for (next_box = collisions_list->first; next_box; next_box = next_box->next) {
-			ptrm = (struct model*)next_box->data;
-			new_scale = ptrm->scale * current->scale;
-			temp = TRANFORM_SPHERE(current, ptrm->position);
-			if (CheckCollisionSpheres(temp, new_scale, *enemy_pos, enemy_range))
+	for (next = models[asteroid->model].collision_list.first; next; next = next->next) {
+		ptrm = (struct model*)next->data;
+		new_scale = ptrm->scale * asteroid->scale;
+		temp = TRANFORM_SPHERE(asteroid, ptrm->position);
+		for (next_enemy_box = models[enemy->shape.model].collision_list.first; next_enemy_box; next_enemy_box = next_enemy_box->next) {
+			eptrm = (struct model*)next->data;
+			enew_scale = eptrm->scale * enemy->shape.scale;
+			etemp = TRANFORM_SPHERE(ecurrent, eptrm->position);
+			if (CheckCollisionSpheres(temp, new_scale, etemp, enew_scale))
 				return 1;
 		}
 	}
 	return 0;
 }
 
+collision_enemy_field_asteroids(enemy_pos, enemy_range, asteroid)
+Vector3 *enemy_pos;
+float enemy_range;
+struct model **asteroid;
+{
+	struct node *next, *next_box;
+	struct model *ptrm, *current;
+	Vector3 temp;
+
+	for (next = asteroids.first; next; next = next->next) {
+		current = (struct model*)next->data;
+		for (next_box = models[current->model].collision_list.first; next_box; next_box = next_box->next) {
+			ptrm = (struct model*)next_box->data;
+			temp = TRANFORM_SPHERE(current, ptrm->position);
+			if (CheckCollisionSpheres(temp, ptrm->scale * current->scale, *enemy_pos, enemy_range)) {
+				*asteroid = current;
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+int max = 0;
+
 find_light()
 {
 	int i;
 
 	for (i=1; i < MAX_LIGHTS; i++)
-		if (lights[i].position.x == SUN_X)
+		if (!lights[i].enabled) {
+			if (i > max) {
+				max = i;
+				printf("%d\n", i);
+			}
 			return i;
+		}
 	return -1;
 }
 

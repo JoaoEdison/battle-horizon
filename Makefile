@@ -1,5 +1,5 @@
 LDFLAGS = -lraylib -lGL -lm -pthread -ldl -lrt -lX11 -l:libblas.a
-CFLAGS = -Wall -Wno-implicit -Wno-multistatement-macros -O3 #-g
+CFLAGS = -Wall -Wno-implicit -Wno-multistatement-macros -O3
 
 all: game editor ai/neural_img.o
 

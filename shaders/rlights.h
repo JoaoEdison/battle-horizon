@@ -36,7 +36,7 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#define MAX_LIGHTS  80         // Max dynamic lights supported by shader
+#define MAX_LIGHTS  80      // Max dynamic lights supported by shader
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -123,7 +123,8 @@ Light CreateLight(int type, Vector3 position, Vector3 target, Color color, Shade
 
     if (lightsCount < MAX_LIGHTS)
     {
-        light.enabled = true;
+        //light.enabled = true;
+        light.enabled = false;
         light.type = type;
         light.position = position;
         light.target = target;
