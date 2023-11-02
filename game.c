@@ -15,17 +15,24 @@
   You should have received a copy of the GNU General Public License along
   with this program; If not, see <http://www.gnu.org/licenses/>
 */
+#define PLAY
+
 #include <stdio.h>
 #include <raylib.h>
 #include <raymath.h>
 #include "defs.h"
 #include "ai/neural_img.h"
+
+#ifdef PLAY
 #include "ui.c"
+#else
+#include "translate.c"
+#endif
+
 #include "battle-horizon.c"
 #define RLIGHTS_IMPLEMENTATION
 #include "shaders/rlights.h"
 
-#define PLAY
 
 /* TODO:
  * ammunition;
@@ -140,8 +147,10 @@ char *argv[];
 	screen_height = GetScreenHeight();
 	
 	InitAudioDevice();
+#ifdef PLAY
 	ui_sound = LoadSound("sounds/ui.wav");
 	SetSoundVolume(ui_sound, 2.0f);
+#endif
 	shot_sound = LoadSound("sounds/laser3.mp3");
 	SetSoundVolume(shot_sound, 0.08f);
 	collision_sound = LoadSound("sounds/hit-asteroid-spacecraft.wav");
@@ -186,9 +195,9 @@ char *argv[];
 	ToggleFullscreen();
 	current_screen = menu;
 #else
-	load_map(argv[1]);
-	DisableCursor();
+	load_map("data/easy.map");
 	current_screen = game;
+	DisableCursor();
 #endif
 
 #ifdef PLAY
@@ -210,13 +219,14 @@ char *argv[];
 	UnloadSound(collision_sound);
 	UnloadSound(victory_sound);
 	UnloadSound(defeat_sound);
-	UnloadSound(ui_sound);
-	CloseAudioDevice();
 #ifdef PLAY
+	UnloadSound(ui_sound);
 	save_scores();
 #else
-	save_weights(WEIGHTS_LOCATION);
+	if (following.size)
+		save_weights(three_heads[((struct enemy_spacecraft*)following.first->data)->head], WEIGHTS_LOCATION);
 #endif
+	CloseAudioDevice();
 }
 
 struct model enemies[10];
@@ -545,7 +555,9 @@ void manage_player()
 	if (collision && !prev_collision) {
 		PlaySound(collision_sound);
 		prev_collision = 1;
+#ifdef PLAY
 		game_state.life--;
+#endif
 	}
 	if (!collision)
 		prev_collision = 0;
@@ -633,9 +645,9 @@ void manage_player()
 		lights[new_bullet.light_idx].enabled = 1;
 		list_insert(&new_bullet, &shots, sizeof(struct shot));
 		prev_time = GetTime();
+		PlaySound(shot_sound);
 #ifdef PLAY
 		game_state.score -= SCORE_PER_SHOT;
-		PlaySound(shot_sound);
 #endif
 	}
 }
