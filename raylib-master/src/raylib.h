@@ -1175,10 +1175,6 @@ RLAPI float GetGesturePinchAngle(void);                 // Get gesture pinch ang
 RLAPI void UpdateCamera(Camera *camera, int mode);      // Update camera position for selected mode
 RLAPI void UpdateCameraPro(Camera *camera, Vector3 movement, Vector3 rotation, float zoom); // Update camera movement/rotation
 
-
-RLAPI void UpdateMyCamera(Camera *camera, float deltatime); //Minha implementacao da camera
-
-
 //------------------------------------------------------------------------------------
 // Basic Shapes Drawing Functions (Module: shapes)
 //------------------------------------------------------------------------------------
@@ -1470,10 +1466,6 @@ RLAPI BoundingBox GetModelBoundingBox(Model model);                             
 // Model drawing functions
 RLAPI void DrawModel(Model model, Vector3 position, float scale, Color tint);               // Draw a model (with texture if set)
 RLAPI void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model with extended parameters
-
-
-RLAPI void DrawModelRotate(Model model, Vector3 position, Vector3 rotationAngle, float scale, Color tint);
-
 
 RLAPI void DrawModelWires(Model model, Vector3 position, float scale, Color tint);          // Draw a model wires (with texture if set)
 RLAPI void DrawModelWiresEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint); // Draw a model wires (with texture if set) with extended parameters

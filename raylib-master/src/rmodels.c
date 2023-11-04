@@ -3421,35 +3421,6 @@ void DrawModel(Model model, Vector3 position, float scale, Color tint)
     DrawModelEx(model, position, rotationAxis, 0.0f, vScale, tint);
 }
 
-void DrawModelRotate(Model model, Vector3 position, Vector3 rotationAngle, float scale, Color tint)
-{
-    Matrix matScale = MatrixScale(scale, scale, scale);
-    Matrix matTranslation = MatrixTranslate(position.x, position.y, position.z);
-    rotationAngle.x *= DEG2RAD;
-    rotationAngle.y *= DEG2RAD;
-    rotationAngle.z *= DEG2RAD;
-    Matrix matRotation = MatrixRotateXYZ(rotationAngle);
-
-    Matrix matTransform = MatrixMultiply(MatrixMultiply(matScale, matRotation), matTranslation);
-
-    model.transform = MatrixMultiply(model.transform, matTransform);
-
-    for (int i = 0; i < model.meshCount; i++)
-    {
-        Color color = model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color;
-
-        Color colorTint = WHITE;
-        colorTint.r = (unsigned char)((((float)color.r/255.0f)*((float)tint.r/255.0f))*255.0f);
-        colorTint.g = (unsigned char)((((float)color.g/255.0f)*((float)tint.g/255.0f))*255.0f);
-        colorTint.b = (unsigned char)((((float)color.b/255.0f)*((float)tint.b/255.0f))*255.0f);
-        colorTint.a = (unsigned char)((((float)color.a/255.0f)*((float)tint.a/255.0f))*255.0f);
-
-        model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color = colorTint;
-        DrawMesh(model.meshes[i], model.materials[model.meshMaterial[i]], model.transform);
-        model.materials[model.meshMaterial[i]].maps[MATERIAL_MAP_DIFFUSE].color = color;
-    }
-}
-
 // Draw a model with extended parameters
 void DrawModelEx(Model model, Vector3 position, Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint)
 {

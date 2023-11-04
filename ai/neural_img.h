@@ -16,11 +16,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <cblas.h>
-#include <math.h>
-
 #define INPUT_QTT 11
 #define MAX_CLASSES 5
 

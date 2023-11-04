@@ -90,7 +90,7 @@ void UpdateLightValues(Shader shader, Light light);         // Send light proper
 
 #if defined(RLIGHTS_IMPLEMENTATION)
 
-#include "raylib.h"
+#include "../raylib-master/src/raylib.h"
 
 //----------------------------------------------------------------------------------
 // Defines and Macros

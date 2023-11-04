@@ -241,15 +241,15 @@ void *x, *y;
 void load_scores()
 {
 	struct score_entry *new_score;
-	unsigned char minutes, seconds, easy;
+	int minutes, seconds, easy;
 	char c, *ptrname;
 	FILE *fp;
 	
 	ALLOCATE(scores_easy, sizeof(struct score_entry), 10)
 	ALLOCATE(scores_hard, sizeof(struct score_entry), 10)
-	if ((fp = fopen("data/scores.csv", "r"))) {
+	if ((fp = fopen("data/scores.csv", "rb"))) {
 		for (;;) {
-			if (fscanf(fp, "%hhd,", &easy) == EOF)
+			if (fscanf(fp, "%d", &easy) == EOF)
 				break;
 			if (easy) {
 				new_score = (struct score_entry*) LAST_SPACE(scores_easy);
@@ -258,10 +258,10 @@ void load_scores()
 				new_score = (struct score_entry*) LAST_SPACE(scores_hard);
 				scores_hard.nmemb++;
 			}
-			fscanf(fp, "%d,", &new_score->score);
+			fscanf(fp, ",%d,", &new_score->score);
 			for (ptrname = new_score->name; (c = fgetc(fp)) != ','; *ptrname++ = c);
 			*ptrname = '\0';
-			fscanf(fp, "%hhd/%hhd/%hhd,%hhd:%hhd\n", &new_score->day, &new_score->month, &new_score->year, &minutes, &seconds);
+			fscanf(fp, "%d/%d/%d,%d:%d\n", &new_score->day, &new_score->month, &new_score->year, &minutes, &seconds);
 			new_score->seconds = seconds;
 			new_score->seconds += minutes * 60;
 		}
@@ -278,25 +278,25 @@ void save_scores()
 	if ((fp = fopen("data/scores.csv", "w"))) {
 		for (i=0; i < scores_easy.nmemb; i++) {
 			new_score = (struct score_entry*) AT(scores_easy, i);
-			fprintf(fp, "%hhd,%d,%s,%hhd/%hhd/%hhd,%hhd:%hhd\n", 1, 
-									     new_score->score,
-									     new_score->name,
-									     new_score->day,
-									     new_score->month,
-									     new_score->year,
-									     new_score->seconds / 60,
-									     new_score->seconds % 60);
+			fprintf(fp, "%d,%d,%s,%d/%d/%d,%d:%d\n", 1, 
+							     new_score->score,
+							     new_score->name,
+							     new_score->day,
+							     new_score->month,
+							     new_score->year,
+							     new_score->seconds / 60,
+							     new_score->seconds % 60);
 		}
 		for (i=0; i < scores_hard.nmemb; i++) {
 			new_score = (struct score_entry*) AT(scores_hard, i);
-			fprintf(fp, "%hhd,%d,%s,%hhd/%hhd/%hhd,%hhd:%hhd\n", 0, 
-									     new_score->score,
-									     new_score->name,
-									     new_score->day,
-									     new_score->month,
-									     new_score->year,
-									     new_score->seconds / 60,
-									     new_score->seconds % 60);
+			fprintf(fp, "%d,%d,%s,%d/%d/%d,%d:%d\n", 0, 
+							     new_score->score,
+							     new_score->name,
+							     new_score->day,
+							     new_score->month,
+							     new_score->year,
+							     new_score->seconds / 60,
+							     new_score->seconds % 60);
 		}
 		fclose(fp);
 	}
@@ -429,13 +429,15 @@ create_network_arr nets = {{layers1, sizeof(layers1)/sizeof(unsigned), INPUT_QTT
 void init_network()
 {
 	int i;
-	
+
+#ifndef __MINGW32__	
 	if (FileExists(WEIGHTS_LOCATION))
 		for (i=0; i < HEAD_COUNT; i++) {
 			three_heads[i] = load_weights(WEIGHTS_LOCATION, 1);
 			ini_backpr(three_heads[i], 2);
 		}
 	else
+#endif
 		for (i=0; i < HEAD_COUNT; i++) {
 			three_heads[i] = init_net_topology(nets, 1, 1);
 			init_random_weights(three_heads[i]);
@@ -457,7 +459,7 @@ char name[];
 	for (i=0; i < model_count; i++) {
 		fscanf(fp, "%s %hd\n", models[i].pathname, &j);
 		models[i].drawing = LoadModel(models[i].pathname);
-		fscanf(fp, "%hhd %s\n", &models[i].has_texture, models[i].texturepath);
+		fscanf(fp, "%d %s\n", &models[i].has_texture, models[i].texturepath);
 		if (models[i].has_texture)
 			models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
 		for (k=0; k < models[i].drawing.materialCount; k++)
@@ -477,7 +479,7 @@ char name[];
 	}
 	fscanf(fp, "%hd\n", &i);
 	while (i--) {
-		fscanf(fp, "%hhu\n", &new.model);
+		fscanf(fp, "%d\n", &new.model);
 		fscanf(fp, "%f %f %f %f\n",
 				&new.position.x,
 				&new.position.y,
@@ -511,8 +513,8 @@ void unload_map()
 #define SPACESHIP_POS camera.target.x, camera.target.y - 1.8f, camera.target.z + 0.5f
 
 #define PLAY_SOUND_BY_DIST(POINT, SOUND) \
-			float I = SOUND.P / Vector3Distance(POINT, (Vector3){SPACESHIP_POS}); \
-			SetSoundVolume(SOUND.sound, I); \
+			float intensity = SOUND.P / Vector3Distance(POINT, (Vector3){SPACESHIP_POS}); \
+			SetSoundVolume(SOUND.sound, intensity); \
 			PlaySound(SOUND.sound);
 
 #define DISABLE_LIGHT(LIGHT) \

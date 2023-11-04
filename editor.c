@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "raylib.h"
-#include "raymath.h"
+#include <raylib.h>
+#include <raymath.h>
 #include "defs.h"
 #include "battle-horizon.c"
 
@@ -53,6 +53,18 @@ void load_models()
 	i++;
 	strcpy(models[i].pathname, "models/asteroid2.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
+	strcpy(models[i].texturepath, "models/black-white-details-moon-texture.png");
+	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
+	models[i].has_texture = 1;
+	models[i].collision_list.first = NULL;
+	models[i].collision_list.size = 0;
+	new_box.scale = 1.0f;
+	new_box.position = (Vector3){ 0 };
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	
+	i++;
+	strcpy(models[i].pathname, "models/asteroid3.glb");
+	models[i].drawing = LoadModel(models[i].pathname);
 	strcpy(models[i].texturepath, "models/black-stone-texture.png");
 	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
 	models[i].has_texture = 1;
@@ -65,8 +77,39 @@ void load_models()
 	new_box.position = (Vector3){ .2f, -.2f, .0f };
 	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 
+	
 	i++;
-	strcpy(models[i].pathname, "models/asteroid3.glb");
+	strcpy(models[i].pathname, "models/asteroid4.glb");
+	models[i].drawing = LoadModel(models[i].pathname);
+	strcpy(models[i].texturepath, "models/black-stone-texture.png");
+	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
+	models[i].has_texture = 1;
+	models[i].collision_list.first = NULL;
+	models[i].collision_list.size = 0;
+	new_box.scale = 0.7f;
+	new_box.position = (Vector3){ 0.0f, 0.0f, 0.2f };
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	new_box.scale = 0.6f;
+	new_box.position = (Vector3){ 0.0f,-0.5f, 0.0f };
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	
+	i++;
+	strcpy(models[i].pathname, "models/asteroid5.glb");
+	models[i].drawing = LoadModel(models[i].pathname);
+	strcpy(models[i].texturepath, "models/black-stone-texture.png");
+	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
+	models[i].has_texture = 1;
+	models[i].collision_list.first = NULL;
+	models[i].collision_list.size = 0;
+	new_box.scale = 0.7f;
+	new_box.position = (Vector3){ 0 };
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	new_box.scale = 0.6f;
+	new_box.position = (Vector3){ 0.0f,  0.5f, 0.2f };
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	
+	i++;
+	strcpy(models[i].pathname, "models/asteroid6.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
 	models[i].has_texture = 0;
 	models[i].collision_list.first = NULL;
@@ -80,7 +123,7 @@ void load_models()
 	new_box.scale = 1.5f;
 	new_box.position = (Vector3){ 0.0f, -1.0f, 0.0f };
 	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
-
+	
 	i++;
 	enemy_model = i;
 	strcpy(models[i].pathname, "models/enemy.glb");
@@ -90,26 +133,27 @@ void load_models()
 	models[i].collision_list.size = 0;
 	new_box.scale = 1.5f;
 	new_box.position = (Vector3){ 0 };
-	list_insert(&new_box, &models[3].collision_list, sizeof(struct model));
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	new_box.scale = 1.1f;
 	new_box.position = (Vector3){ 2.3f, .0f, .0f };
-	list_insert(&new_box, &models[3].collision_list, sizeof(struct model));
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	new_box.scale = 1.1f;
 	new_box.position = (Vector3){-2.3f, .0f, .0f };
-	list_insert(&new_box, &models[3].collision_list, sizeof(struct model));
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	new_box.scale = .8f;
 	new_box.position = (Vector3){ 2.1f, 2.0f, .0f };
-	list_insert(&new_box, &models[3].collision_list, sizeof(struct model));
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	new_box.scale = .8f;
 	new_box.position = (Vector3){-2.1f, 2.0f, .0f };
-	list_insert(&new_box, &models[3].collision_list, sizeof(struct model));
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	new_box.scale = .8f;
 	new_box.position = (Vector3){ 2.2f,-2.0f, .0f };
-	list_insert(&new_box, &models[3].collision_list, sizeof(struct model));
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	new_box.scale = .8f;
 	new_box.position = (Vector3){-2.2f,-2.0f, .0f };
-	list_insert(&new_box, &models[3].collision_list, sizeof(struct model));
-	model_count = 4;
+	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+
+	model_count = 7;
 }
 
 struct list drawing = { 0 };
@@ -218,24 +262,26 @@ main()
 
 void add_objects()
 {
-	if (IsKeyPressed(KEY_ONE)) {
+	char number_pressed;
+	
+	number_pressed = -1; 
+	if (IsKeyPressed(KEY_ONE))
+		number_pressed = 0;
+	if (IsKeyPressed(KEY_TWO))
+		number_pressed = 1;
+	if (IsKeyPressed(KEY_THREE))
+		number_pressed = 2;
+	if (IsKeyPressed(KEY_FOUR))
+		number_pressed = 3;
+	if (IsKeyPressed(KEY_FIVE))
+		number_pressed = 4;
+	if (IsKeyPressed(KEY_SIX))
+		number_pressed = 5;
+	if (IsKeyPressed(KEY_SEVEN))
+		number_pressed = 6;
+	if (number_pressed >= 0) {
 		NEW_MODEL
-		new_model.model = 0;
-		list_insert(&new_model, &drawing, sizeof(struct model));
-	}
-	if (IsKeyPressed(KEY_TWO)) {
-		NEW_MODEL
-		new_model.model = 1;
-		list_insert(&new_model, &drawing, sizeof(struct model));
-	}
-	if (IsKeyPressed(KEY_THREE)) {
-		NEW_MODEL
-		new_model.model = 2;
-		list_insert(&new_model, &drawing, sizeof(struct model));
-	}
-	if (IsKeyPressed(KEY_FOUR)) {
-		NEW_MODEL
-		new_model.model = 3;
+		new_model.model = number_pressed;
 		list_insert(&new_model, &drawing, sizeof(struct model));
 	}
 	if (IsKeyPressed(KEY_G)) {
@@ -599,11 +645,20 @@ struct group *group_shape;
 void trans_group()
 {
 	struct node *next, *current;
+	struct list *l;
 	Vector3 direction;
 
 	if (IsKeyPressed(KEY_B))
 		for (next = groups.first; next; next = next->next)
 			get_in_volume(&drawing, &(((struct group*)next->data)->group_selection), next->data);
+	if (IsKeyPressed(KEY_V))
+		for (next = groups.first; next; next = next->next) {
+			l = &((struct group*)next->data)->group_selection;
+			while (l->first) {
+				list_insert(l->first->data, &selection, sizeof(struct model));
+				list_remove(l->first, l);
+			}
+		}
 	if (IsKeyPressed(KEY_R))
 		for (next = groups.first; next; next = next->next)
 			RELEASE_GROUP_SELECTION(((struct group*)next->data)->group_selection)

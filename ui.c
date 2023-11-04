@@ -37,8 +37,7 @@ Sound ui_sound;
 
 struct score_entry {
 	char name[MAX_NAME_LEN];
-	unsigned char day, month, year;
-	int score, seconds;
+	int day, month, year, score, seconds;
 };
 
 struct vector_d scores_easy, scores_hard;
@@ -121,7 +120,7 @@ draw_ui(width, height)
 		
 		now = DEADLINE_SECS + game_state.time;
 		now -= GetTime();
-		sprintf(time_stamp, "%02hhd:%02hhd", (int)(now) / 60, (int)(now) % 60);
+		sprintf(time_stamp, "%02d:%02d", (int)(now) / 60, (int)(now) % 60);
 		DrawTextEx(font, time_stamp, (Vector2){
 				width/2 - MeasureTextEx(font, time_stamp, font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
 				MeasureTextEx(font, time_stamp, font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
@@ -215,12 +214,12 @@ struct vector_d *v;
 		curr_inc += (x_right - x_left) / 2;
 		
 		inc = (x_right - x_left) / 5;
-		sprintf(buffer, "%02hhd/%02hhd/%02hhd", ptrsc->day, ptrsc->month, ptrsc->year);
+		sprintf(buffer, "%02d/%02d/%02d", ptrsc->day, ptrsc->month, ptrsc->year);
 		PRINT_BUFFER
 		curr_inc += (x_right - x_left) / 5;
 		
 		inc = (x_right - x_left) * 0.2375f;
-		sprintf(buffer, "%02hhd:%02hhd", ptrsc->seconds / 60, ptrsc->seconds % 60);
+		sprintf(buffer, "%02d:%02d", ptrsc->seconds / 60, ptrsc->seconds % 60);
 		PRINT_BUFFER
 		
 		y_begin += MeasureTextEx(font, buffer, font.baseSize * SCORE_SIZE, SPACING).y;

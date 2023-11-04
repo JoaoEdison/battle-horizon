@@ -194,7 +194,6 @@ RLAPI Matrix GetCameraProjectionMatrix(Camera* camera, float aspect);
 
 #define CAMERA_ORBITAL_SPEED                            0.5f       // Radians per second
 
-
 #define CAMERA_FIRST_PERSON_STEP_TRIGONOMETRIC_DIVIDER  8.0f
 #define CAMERA_FIRST_PERSON_STEP_DIVIDER                30.0f
 #define CAMERA_FIRST_PERSON_WAVING_DIVIDER              200.0f
@@ -508,76 +507,6 @@ void UpdateCamera(Camera *camera, int mode)
         if (IsKeyPressed(KEY_KP_SUBTRACT)) CameraMoveToTarget(camera, 2.0f);
         if (IsKeyPressed(KEY_KP_ADD)) CameraMoveToTarget(camera, -2.0f);
     }
-}
-
-#include "../../defs.h"
-
-void UpdateMyCamera(Camera *camera, float deltatime)
-{
-    static float delta_vel_up = 0.0f;
-    static float delta_vel_side = 0.0f;
-    static float velocity = SPACECRAFT_SPEED;
-    Vector2 mousePositionDelta = GetMouseDelta();
-
-    CameraYaw(camera, -mousePositionDelta.x*CAMERA_MOUSE_MOVE_SENSITIVITY, true);
-    CameraPitch(camera, -mousePositionDelta.y*CAMERA_MOUSE_MOVE_SENSITIVITY, true, true, false);
-    
-    if (IsKeyPressed(KEY_SPACE))
-        velocity = velocity == SPACECRAFT_SPEED? SPACECRAFT_SPEED_MAX : SPACECRAFT_SPEED;
-    camera->target.z -= velocity * deltatime;
-    camera->position.z -= velocity * deltatime;
-    if (IsKeyDown(KEY_W)) {
-        if (delta_vel_up < 0.0f)
-            delta_vel_up = 0.0f;
-        else if (delta_vel_up > LIMIT_VELOCITY)
-            delta_vel_up = LIMIT_VELOCITY;
-        if (camera->target.y + delta_vel_up * deltatime <  MAX_DIST + 1.8f)
-            delta_vel_up += VELOCITY_FORWARD;
-        else
-            delta_vel_up =  MAX_DIST + 1.8f - camera->target.y;
-        camera->target.y += delta_vel_up * deltatime;
-        camera->position.y += delta_vel_up * deltatime;
-    }
-    if (IsKeyDown(KEY_S)) {
-        if (delta_vel_up > 0.0f)
-            delta_vel_up = 0.0f;
-        else if (delta_vel_up < -LIMIT_VELOCITY)
-            delta_vel_up = -LIMIT_VELOCITY;
-        if (camera->target.y + delta_vel_up * deltatime > -MAX_DIST + 1.8f)
-            delta_vel_up -= VELOCITY_FORWARD;
-        else
-            delta_vel_up = -MAX_DIST + 1.8f - camera->target.y;
-        camera->target.y += delta_vel_up * deltatime;
-        camera->position.y += delta_vel_up * deltatime;
-    }
-    if (IsKeyDown(KEY_D)) {
-        if (delta_vel_side < 0.0f)
-            delta_vel_side = 0.0f;
-        else if (delta_vel_side > LIMIT_VELOCITY)
-            delta_vel_side = LIMIT_VELOCITY;
-        if (camera->target.x + delta_vel_side * deltatime <  MAX_DIST)
-            delta_vel_side += VELOCITY_SIDE;
-        else
-            delta_vel_side =  MAX_DIST - camera->target.x;
-        camera->target.x += delta_vel_side * deltatime;
-        camera->position.x += delta_vel_side * deltatime; 
-    }
-    if (IsKeyDown(KEY_A)) {
-        if (delta_vel_side > 0.0f)
-            delta_vel_side = 0.0f;
-        else if (delta_vel_side < -LIMIT_VELOCITY)
-            delta_vel_side = -LIMIT_VELOCITY;
-        if (camera->target.x + delta_vel_side * deltatime > -MAX_DIST)
-            delta_vel_side -= VELOCITY_SIDE;
-        else
-            delta_vel_side = -MAX_DIST - camera->target.x;
-        camera->target.x += delta_vel_side * deltatime;
-        camera->position.x += delta_vel_side * deltatime; 
-    }
-    if (IsKeyReleased(KEY_S) || IsKeyReleased(KEY_W))
-        delta_vel_up = 0.0f;
-    if (IsKeyReleased(KEY_A) || IsKeyReleased(KEY_D))
-        delta_vel_side = 0.0f;
 }
 
 #endif // !RCAMERA_STANDALONE

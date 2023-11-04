@@ -16,6 +16,11 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cblas.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
 #include "neural_img.h"
 
 struct layer {
@@ -318,7 +323,7 @@ char file_name[];
 	
 	if (verbose)
 		printf("Loading weights and biases to the network from: %s...\n", file_name);
-	if (!(fp = fopen(file_name, "r"))) {
+	if (!(fp = fopen(file_name, "rb"))) {
 		fprintf(stderr, "[load_weights] File %s could not be opened for reading\n", file_name);
 		return NULL;
 	}
@@ -373,7 +378,7 @@ char file_name[];
 	int i, j, k;
 	
 	puts("Saving network weights and biases to: weights...");
-	if (!(fp = fopen(file_name, "w"))) {
+	if (!(fp = fopen(file_name, "wb"))) {
 		fputs("[save_weights] Could not create network file. Discarding changes made.\n", stderr);
 		return;
 	}
@@ -390,8 +395,8 @@ char file_name[];
 		for (i=0, ptrl=ptrn->arr; i < ptrn->num_layers; ptrl++, i++) {
 			for (j=0; j < ptrl->n; j++) {
 				for (k=0; k < ptrl->prev_n; k++)
-					fprintf(fp, "%a\n", ptrl->w[j][k]);
-				fprintf(fp, "%a\n", ptrl->b[j]);
+					fprintf(fp, "%f\n", ptrl->w[j][k]);
+				fprintf(fp, "%f\n", ptrl->b[j]);
 			}
 			free(ptrl->w[0]);
 			free(ptrl->w); free(ptrl->b); free(ptrl->z);
