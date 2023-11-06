@@ -432,7 +432,7 @@ char name[];
 	}
 	fscanf(fp, "%hd\n", &j);
 	while (j--) {
-		fscanf(fp, "%hhu\n", &new.model);
+		fscanf(fp, "%u\n", &new.model);
 		new.model = map[new.model];
 		fscanf(fp, "%f %f %f %f\n",
 				&new.position.x,
@@ -557,6 +557,12 @@ void trans_selection()
 	if (IsKeyDown(KEY_Z))
 		for (next = selection.first; next; next = next->next)
 			((struct model*)next->data)->angles.z += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+	if (IsKeyPressed(KEY_R))
+		for (next = selection.first; next; next = next->next) {
+			((struct model*)next->data)->angles.x = GetRandomValue(0, 359);
+			((struct model*)next->data)->angles.y = GetRandomValue(0, 359);
+			((struct model*)next->data)->angles.z = GetRandomValue(0, 359);
+		}
 	if (IsKeyDown(KEY_LEFT_SHIFT)) {
 		if (IsKeyDown(KEY_EQUAL))
 			for (next = selection.first; next; next = next->next)

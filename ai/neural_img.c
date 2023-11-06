@@ -16,9 +16,9 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <cblas.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cblas.h>
 #include <math.h>
 
 #include "neural_img.h"
@@ -164,7 +164,7 @@ float *flat_input, *expected;
 		if (ptrn->out_id == -1)
 			for (i=0; i < ptrl->n; i++) {
 				//ptrberr[i] = expected[i]? ptrl->a[i] - 1 : ptrl->a[i];
-				ptrberr[i] = (ptrl->a[i] - expected[i]) * DERIVATIVE_ACTIVATION_FN(ptrl->z[i]);
+				ptrberr[i] = ptrl->a[i] - expected[i];
 			}
 		else
 			for (i=0; i < ptrl->n; i++)
@@ -333,7 +333,7 @@ char file_name[];
 	}
 	nets = malloc(sizeof(create_network) * i);
 	for (ptrc=nets; ptrc < nets + i; ptrc++) {
-		if (fscanf(fp, "%x %hhx %hd %x", &ptrc->num_layers, &ptrc->source, &ptrc->output, &ptrc->num_input) != 4) {
+		if (fscanf(fp, "%x %x %d %x", &ptrc->num_layers, &ptrc->source, &ptrc->output, &ptrc->num_input) != 4) {
 			fputs("[load_weights] Unable to read network info\n", stderr);
 			return NULL;
 		}
@@ -350,7 +350,10 @@ char file_name[];
 		free(ptrc->neurons_per_layer);
 	free(nets);
 	for (ptrn=model->arr; ptrn < model->arr + model->num_nets; ptrn++)
-		for (ptrl=ptrn->arr; ptrl < ptrn->arr + ptrn->num_layers; ptrl++)
+		for (ptrl=ptrn->arr; ptrl < ptrn->arr + ptrn->num_layers; ptrl++) {
+			fread(ptrl->w[0], sizeof(float), ptrl->n * ptrl->prev_n, fp);
+			fread(ptrl->b, sizeof(float), ptrl->n, fp);
+			/*
 			for (i=0; i < ptrl->n; i++) {
 				for (j=0; j < ptrl->prev_n; j++)
 					if (fscanf(fp, "%a\n", &ptrl->w[i][j]) != 1) {
@@ -362,6 +365,8 @@ char file_name[];
 					return NULL;
 				}
 			}
+			*/
+		}
 	fclose(fp);
 	if (verbose)
 		puts("Done.");
@@ -375,7 +380,7 @@ char file_name[];
 	FILE *fp;
 	struct net *ptrn;
 	struct layer *ptrl;
-	int i, j, k;
+	int i;
 	
 	puts("Saving network weights and biases to: weights...");
 	if (!(fp = fopen(file_name, "wb"))) {
@@ -384,7 +389,7 @@ char file_name[];
 	}
 	fprintf(fp, "%x\n", model->num_nets);
 	for (ptrn=model->arr; ptrn < model->arr + model->num_nets; ptrn++) {
-		fprintf(fp, "%x %hhx %hd %x", ptrn->num_layers, ptrn->num_in_nets? 0 : 1, ptrn->out_id, ptrn->arr->prev_n);
+		fprintf(fp, "%x %x %d %x", ptrn->num_layers, ptrn->num_in_nets? 0 : 1, ptrn->out_id, ptrn->arr->prev_n);
 		for (ptrl=ptrn->arr; ptrl < ptrn->arr + ptrn->num_layers; ptrl++)
 			fprintf(fp, " %x", ptrl->n);
 		fputc('\n', fp);
@@ -393,11 +398,15 @@ char file_name[];
 		end_backpr(model);
 	for (ptrn=model->arr; ptrn < model->arr + model->num_nets; ptrn++) {
 		for (i=0, ptrl=ptrn->arr; i < ptrn->num_layers; ptrl++, i++) {
+			fwrite(ptrl->w[0], sizeof(float), ptrl->n * ptrl->prev_n, fp);
+			fwrite(ptrl->b, sizeof(float), ptrl->n, fp);
+			/*
 			for (j=0; j < ptrl->n; j++) {
 				for (k=0; k < ptrl->prev_n; k++)
-					fprintf(fp, "%f\n", ptrl->w[j][k]);
-				fprintf(fp, "%f\n", ptrl->b[j]);
+					fprintf(fp, "%a\n", ptrl->w[j][k]);
+				fprintf(fp, "%a\n", ptrl->b[j]);
 			}
+			*/
 			free(ptrl->w[0]);
 			free(ptrl->w); free(ptrl->b); free(ptrl->z);
 			if (ptrn->output_original || i < ptrn->num_layers-1)

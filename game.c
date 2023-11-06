@@ -33,12 +33,6 @@
 #define RLIGHTS_IMPLEMENTATION
 #include "shaders/rlights.h"
 
-
-/* TODO:
- * ammunition;
- * fix errors.
- * */
-
 struct enemy_spacecraft {
 	struct model shape;
 	float dist;
@@ -68,6 +62,11 @@ struct enemy_shot {
 };
 
 #define WEIGHTS_LOCATION "data/weights"
+
+#ifndef PLAY
+#undef HEAD_COUNT
+#define HEAD_COUNT 1
+#endif
 
 bignet_ptr three_heads[HEAD_COUNT];
 
@@ -117,8 +116,10 @@ char *argv[];
 #ifdef PLAY
 	void load_scores(), save_scores();
 
-	new_enemy.life = ENEMY_LIFE;
 	game_state.life = MAX_LIFE;
+	new_enemy.life = ENEMY_LIFE;
+#else
+	new_enemy.life = 20;
 #endif
 	new_enemy.color = MODEL_COLOR;
 	new_enemy.last_asteroid_penalty = new_enemy.last_shooted_penalty = 0.0f;
@@ -430,14 +431,12 @@ void init_network()
 {
 	int i;
 
-#ifndef __MINGW32__	
 	if (FileExists(WEIGHTS_LOCATION))
 		for (i=0; i < HEAD_COUNT; i++) {
 			three_heads[i] = load_weights(WEIGHTS_LOCATION, 1);
 			ini_backpr(three_heads[i], 2);
 		}
 	else
-#endif
 		for (i=0; i < HEAD_COUNT; i++) {
 			three_heads[i] = init_net_topology(nets, 1, 1);
 			init_random_weights(three_heads[i]);
@@ -1062,7 +1061,7 @@ void draw_scene()
 		if (draw_model->position.z + limit - camera.target.z >= .0f) {
 			new_enemy.shape = enemies[i];
 			new_enemy.dist = camera.target.z - enemies[i].position.z;
-			new_enemy.head = GetRandomValue(0, 2);
+			new_enemy.head = GetRandomValue(0, HEAD_COUNT-1);
 			list_insert(&new_enemy, &following, sizeof(struct enemy_spacecraft));
 			first_enemy++;
 			continue;

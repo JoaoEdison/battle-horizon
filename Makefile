@@ -1,5 +1,5 @@
 LDFLAGS = -lraylib -lGL -lm -pthread -ldl -lrt -lX11 -l:libblas.a
-CFLAGS = -Wall -Wno-implicit -Wno-multistatement-macros -O3 -p
+CFLAGS = -Wall -Wno-implicit -Wno-multistatement-macros -O3 -g
 
 all: game editor ai/neural_img.o ai/x86_64-w64-neural.o x86_64-w64-battle-horizon.exe
 
