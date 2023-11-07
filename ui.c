@@ -24,13 +24,9 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.c"
 
-#define STEP_SIZE 100
 #define PADDING 6
-#define WIDTH_LIFE 20
-#define SPACING 4
-#define WIN_MESSAGE_SIZE 8
 
-#define MAX_NAME_LEN 20
+#define MAX_NAME_LEN 14
 
 Font font;
 Sound ui_sound;
@@ -51,7 +47,47 @@ char name[MAX_NAME_LEN] = T_M_NAME;
 
 bool easy_map = true;
 
-/*ordenado por pontuação, data, nome e segundos*/
+int title_size = 12, about_size = 4;
+int button_font_size = 5, between_buttons_size = 100;
+int first_component_y = 195, post_header = 65, width_field_name = 600;
+int panel_margin_top = 300, panel_margin_botton = 180, panel_margin_outside = 100;
+int win_message_size = 8, step_size = 100, width_life = 20;
+int score_size = 2, ratio_width_score_column = 16, spacing = 4;
+
+void config_layout(width, height)
+{
+	if (width < 1280) {
+		title_size = 5;
+		about_size = 2;
+		button_font_size = 2;
+		between_buttons_size = 60;
+		first_component_y = 100;
+		raygui_windowbox_statusbar_height = 30;
+		post_header = 35;
+		width_field_name = 300;
+		panel_margin_top = 150;
+		panel_margin_outside = 50;
+		panel_margin_botton = 90;
+		score_size = 1;
+		win_message_size = 4;
+		step_size = 60;
+		ratio_width_score_column = 12;
+		spacing = 2;
+	} else if (width < 1920) {
+		title_size = 9;
+		about_size = 3;
+		button_font_size = 3;
+		between_buttons_size = 75;
+		panel_margin_outside = 60;
+		panel_margin_top = 210;
+		panel_margin_botton = 140;
+		ratio_width_score_column = 12;
+		raygui_windowbox_statusbar_height = 50;
+		first_component_y = 150;
+	}
+}
+
+/*ordered by score, date, name and seconds*/
 sort_scores(x, y)
 void *x, *y;
 {
@@ -104,17 +140,17 @@ draw_ui(width, height)
 	char time_stamp[8];
 	
 	if (!game_state.state) {
-		DrawRectangle(1, height/2 - (MAX_LIFE * STEP_SIZE + 2*PADDING) / 2, WIDTH_LIFE + 2*PADDING,
-				(MAX_LIFE * STEP_SIZE + 2*PADDING), GRAY);
-		DrawRectangle(PADDING+1, height/2 - game_state.life * STEP_SIZE / 2, WIDTH_LIFE, game_state.life * STEP_SIZE, RED);
+		DrawRectangle(1, height/2 - (MAX_LIFE * step_size + 2*PADDING) / 2, width_life + 2*PADDING,
+				(MAX_LIFE * step_size + 2*PADDING), GRAY);
+		DrawRectangle(PADDING+1, height/2 - game_state.life * step_size / 2, width_life, game_state.life * step_size, RED);
 		
-		DrawRectangle(width - WIDTH_LIFE - 2 * PADDING - 1, height/2 - (MAX_LIFE * STEP_SIZE + 2*PADDING) / 2, WIDTH_LIFE + 2*PADDING,
-				(MAX_LIFE * STEP_SIZE + 2*PADDING), GRAY);
+		DrawRectangle(width - width_life - 2 * PADDING - 1, height/2 - (MAX_LIFE * step_size + 2*PADDING) / 2, width_life + 2*PADDING,
+				(MAX_LIFE * step_size + 2*PADDING), GRAY);
 		Rectangle rec = {
 			width-PADDING-1,
-			height/2 + MAX_LIFE * STEP_SIZE / 2,
-			WIDTH_LIFE,
-			game_state.distance / ARRIVAL_DIST * STEP_SIZE * MAX_LIFE
+			height/2 + MAX_LIFE * step_size / 2,
+			width_life,
+			game_state.distance / ARRIVAL_DIST * step_size * MAX_LIFE
 		};
 		DrawRectanglePro(rec, (Vector2){0.0f, 0.0f}, 180.0f, ORANGE);
 		
@@ -122,9 +158,9 @@ draw_ui(width, height)
 		now -= GetTime();
 		sprintf(time_stamp, "%02d:%02d", (int)(now) / 60, (int)(now) % 60);
 		DrawTextEx(font, time_stamp, (Vector2){
-				width/2 - MeasureTextEx(font, time_stamp, font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
-				MeasureTextEx(font, time_stamp, font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
-				}, font.baseSize * WIN_MESSAGE_SIZE, SPACING, YELLOW);
+				width/2 - MeasureTextEx(font, time_stamp, font.baseSize * win_message_size, spacing).x/2,
+				MeasureTextEx(font, time_stamp, font.baseSize * win_message_size, spacing).y/2
+				}, font.baseSize * win_message_size, spacing, YELLOW);
 	} else if (game_state.state > 0) {
 		now = GetTime();
 		if (game_state.prev_time == 0.0f)
@@ -137,9 +173,9 @@ draw_ui(width, height)
 			return 1;
 		}
 		DrawTextEx(font, t_m_win, (Vector2){
-				width/2 - MeasureTextEx(font, t_m_win, font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
-				height/2 - MeasureTextEx(font, t_m_win, font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
-				}, font.baseSize * WIN_MESSAGE_SIZE, SPACING, GREEN);
+				width/2 - MeasureTextEx(font, t_m_win, font.baseSize * win_message_size, spacing).x/2,
+				height/2 - MeasureTextEx(font, t_m_win, font.baseSize * win_message_size, spacing).y/2
+				}, font.baseSize * win_message_size, spacing, GREEN);
 	} else {
 		now = GetTime();
 		if (game_state.prev_time == 0.0f)
@@ -149,15 +185,13 @@ draw_ui(width, height)
 			return 1;
 		}
 		DrawTextEx(font, t_m_lost, (Vector2){
-				width/2 - MeasureTextEx(font, t_m_lost, font.baseSize * WIN_MESSAGE_SIZE, SPACING).x/2,
-				height/2 - MeasureTextEx(font, t_m_lost, font.baseSize * WIN_MESSAGE_SIZE, SPACING).y/2
-				}, font.baseSize * WIN_MESSAGE_SIZE, SPACING, RED);
+				width/2 - MeasureTextEx(font, t_m_lost, font.baseSize * win_message_size, spacing).x/2,
+				height/2 - MeasureTextEx(font, t_m_lost, font.baseSize * win_message_size, spacing).y/2
+				}, font.baseSize * win_message_size, spacing, RED);
 	}
 	return 0;
 }
 
-#define TITLE_SIZE 12
-#define BUTTON_FONT_SIZE 5
 #define BUTTON_PADDING_SIDES 20
 #define BUTTON_PADDING_VERT 10
 
@@ -168,17 +202,17 @@ draw_menu(width, height)
 	ret = 0;
 	Rectangle rec;
 	GuiSetFont(font);
-	GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize * BUTTON_FONT_SIZE);
-	rec.width = MeasureTextEx(font, t_m_play, font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
-	rec.height = MeasureTextEx(font, t_m_play, font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
+	GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize * button_font_size);
+	rec.width = MeasureTextEx(font, t_m_play, font.baseSize * button_font_size, spacing).x + BUTTON_PADDING_SIDES;
+	rec.height = MeasureTextEx(font, t_m_play, font.baseSize * button_font_size, spacing).y + BUTTON_PADDING_VERT;
 	rec.x = (width - rec.width) / 2;
 	rec.y = height / 2 - 150;
 	if (GuiButton(rec, t_m_play))
 		ret = 1;
-	rec.y += 100;
+	rec.y += between_buttons_size;
 	if (GuiButton(rec, t_m_about))
 		ret = 3;
-	rec.y += 100;
+	rec.y += between_buttons_size;
 	if (GuiButton(rec, t_m_exit))
 		ret = 4;
 	if (ret)
@@ -186,12 +220,11 @@ draw_menu(width, height)
 	return ret;
 }
 
-#define SCORE_SIZE 2
 #define PRINT_BUFFER \
 		DrawTextEx(font, buffer, (Vector2){ \
-				x_left + curr_inc + (inc - MeasureTextEx(font, buffer, font.baseSize * SCORE_SIZE, SPACING).x) / 2, \
+				x_left + curr_inc + (inc - MeasureTextEx(font, buffer, font.baseSize * score_size, spacing).x) / 2, \
 				y_begin \
-				}, font.baseSize * SCORE_SIZE, SPACING, GetColor(GuiGetStyle(STATUSBAR, BASE)));
+				}, font.baseSize * score_size, spacing, GetColor(GuiGetStyle(STATUSBAR, BASE)));
 
 void draw_scores(v, x_left, x_right, y_begin)
 struct vector_d *v;
@@ -203,10 +236,10 @@ struct vector_d *v;
 	for (i=0; i < v->nmemb; i++) {	
 		ptrsc = (struct score_entry*) AT_PTR(v, i);
 		curr_inc = 0;
-		inc = (x_right - x_left) / 16;
+		inc = (x_right - x_left) / ratio_width_score_column;
 		sprintf(buffer, "%d", ptrsc->score);
 		PRINT_BUFFER
-		curr_inc = (x_right - x_left) / 16;
+		curr_inc = (x_right - x_left) / ratio_width_score_column;
 
 		inc = (x_right - x_left) / 2;
 		sprintf(buffer, "%s", ptrsc->name);
@@ -222,16 +255,11 @@ struct vector_d *v;
 		sprintf(buffer, "%02d:%02d", ptrsc->seconds / 60, ptrsc->seconds % 60);
 		PRINT_BUFFER
 		
-		y_begin += MeasureTextEx(font, buffer, font.baseSize * SCORE_SIZE, SPACING).y;
+		y_begin += MeasureTextEx(font, buffer, font.baseSize * score_size, spacing).y;
 	}
 }
 
-#define PANEL_MARGIN_OUTSIDE 100
 #define PANEL_MARGIN_INSIDE 20
-#define PANEL_MARGIN_TOP 300
-#define PANEL_MARGIN_BOTTON 180
-#define PANEL_HEADER_SIZE 3
-#define FIRST_COMPONENT_Y 195
 
 mouse_in_rectangle(rec)
 Rectangle *rec;
@@ -254,12 +282,12 @@ draw_play(width, height)
 	ret = 1;
 	GuiSetStyle(DEFAULT, BACKGROUND_COLOR, 0);
 	GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
-	rec.width = width / 2 - PANEL_MARGIN_INSIDE - PANEL_MARGIN_OUTSIDE;
-	rec.height = height - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTON;
-	rec.x = PANEL_MARGIN_OUTSIDE;
-	rec.y = PANEL_MARGIN_TOP;
+	rec.width = width / 2 - PANEL_MARGIN_INSIDE - panel_margin_outside;
+	rec.height = height - panel_margin_top - panel_margin_botton;
+	rec.x = panel_margin_outside;
+	rec.y = panel_margin_top;
 	GuiPanel(rec, t_m_easy);
-	draw_scores(&scores_easy, (int)(rec.x), (int)(rec.x + rec.width), (int)(rec.y) + 65);
+	draw_scores(&scores_easy, (int)(rec.x), (int)(rec.x + rec.width), (int)(rec.y) + post_header);
 	if (easy_map)
 		DrawRectangleLinesEx(rec, 3.0f, SKYBLUE);
 	if (mouse_in_rectangle(&rec))
@@ -272,7 +300,7 @@ draw_play(width, height)
 	
 	rec.x = width / 2 + PANEL_MARGIN_INSIDE;
 	GuiPanel(rec, t_m_hard);
-	draw_scores(&scores_hard, (int)(rec.x), (int)(rec.x + rec.width), (int)(rec.y) + 65);
+	draw_scores(&scores_hard, (int)(rec.x), (int)(rec.x + rec.width), (int)(rec.y) + post_header);
 	if (!easy_map)
 		DrawRectangleLinesEx(rec, 3.0f, RED);
 	if (mouse_in_rectangle(&rec))
@@ -284,25 +312,25 @@ draw_play(width, height)
 		}
 
 	rec.y = (height + rec.y + rec.height) / 2;
-	rec.width = MeasureTextEx(font, t_m_back, font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
-	rec.height = MeasureTextEx(font, t_m_back, font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
+	rec.width = MeasureTextEx(font, t_m_back, font.baseSize * button_font_size, spacing).x + BUTTON_PADDING_SIDES;
+	rec.height = MeasureTextEx(font, t_m_back, font.baseSize * button_font_size, spacing).y + BUTTON_PADDING_VERT;
 	rec.y -= rec.height / 2;
 	rec.x = width / 2 - rec.width - PANEL_MARGIN_INSIDE;
 	if (GuiButton(rec, t_m_back))
 		ret = 0;
 
-	rec.width = MeasureTextEx(font, t_m_play, font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
+	rec.width = MeasureTextEx(font, t_m_play, font.baseSize * button_font_size, spacing).x + BUTTON_PADDING_SIDES;
 	rec.x = width / 2 + PANEL_MARGIN_INSIDE;
 	if (GuiButton(rec, t_m_play))
 		ret = 2;
 	
-	GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize * BUTTON_FONT_SIZE);
-	rec.height = 60;
-	rec.width = 600;
+	GuiSetStyle(DEFAULT, TEXT_SIZE, font.baseSize * button_font_size);
+	rec.height = MeasureTextEx(font, name, font.baseSize * button_font_size, spacing).y + 10;
+	rec.width = width_field_name;
 	rec.x = (width - rec.width) / 2; 
-	rec.y = FIRST_COMPONENT_Y;
+	rec.y = first_component_y;
 	edit = mouse_in_rectangle(&rec);
-	GuiTextBox(rec, name, 30, edit);
+	GuiTextBox(rec, name, MAX_NAME_LEN, edit);
 
 	if (ret != 1)
 		PlaySound(ui_sound);
@@ -428,18 +456,18 @@ draw_about(width, height)
 	GuiSetStyle(DEFAULT, BACKGROUND_COLOR, 0);
 	GuiSetStyle(STATUSBAR, TEXT_ALIGNMENT, TEXT_ALIGN_CENTER);
 	Rectangle rec;
-	rec.width = width - 2 * PANEL_MARGIN_OUTSIDE;
-	rec.height = height - FIRST_COMPONENT_Y - PANEL_MARGIN_BOTTON;
-	rec.x = PANEL_MARGIN_OUTSIDE;
-	rec.y = FIRST_COMPONENT_Y;
+	rec.width = width - 2 * panel_margin_outside;
+	rec.height = height - first_component_y - panel_margin_botton;
+	rec.x = panel_margin_outside;
+	rec.y = first_component_y;
 	GuiPanel(rec, t_m_about_header);
-	rec.y += 65;
+	rec.y += post_header;
 	rec.x += 5;
-	DrawTextBoxedSelectable(font, text_about, rec, font.baseSize * 4, 1, GetColor(GuiGetStyle(STATUSBAR, BASE)), 0, 0, BLACK, BLACK);
+	DrawTextBoxedSelectable(font, text_about, rec, font.baseSize * about_size, 1, GetColor(GuiGetStyle(STATUSBAR, BASE)), 0, 0, BLACK, BLACK);
 	rec.y -= 65;
-	rec.width = MeasureTextEx(font, t_m_back, font.baseSize * BUTTON_FONT_SIZE, SPACING).x + BUTTON_PADDING_SIDES;
+	rec.width = MeasureTextEx(font, t_m_back, font.baseSize * button_font_size, spacing).x + BUTTON_PADDING_SIDES;
 	rec.y = (height + rec.y + rec.height) / 2;
-	rec.height = MeasureTextEx(font, t_m_back, font.baseSize * BUTTON_FONT_SIZE, SPACING).y + BUTTON_PADDING_VERT;
+	rec.height = MeasureTextEx(font, t_m_back, font.baseSize * button_font_size, spacing).y + BUTTON_PADDING_VERT;
 	rec.y -= rec.height / 2;
 	rec.x = (width - rec.width) / 2;
 	if (GuiButton(rec, t_m_back))

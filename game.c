@@ -144,11 +144,12 @@ char *argv[];
 	
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
 	InitWindow(0, 0, t_t_game);
+	InitAudioDevice();
+
 	screen_width = GetScreenWidth();
 	screen_height = GetScreenHeight();
-	
-	InitAudioDevice();
 #ifdef PLAY
+	config_layout(screen_width, screen_height);
 	ui_sound = LoadSound("sounds/ui.wav");
 	SetSoundVolume(ui_sound, 2.0f);
 #endif
@@ -313,9 +314,9 @@ void menu()
 	BeginDrawing();
 		ClearBackground(BLACK);
 		DrawTextEx(font, t_t_game, (Vector2){
-				screen_width/2 - MeasureTextEx(font, t_t_game, font.baseSize * TITLE_SIZE, SPACING).x/2,
-				MeasureTextEx(font, t_t_game, font.baseSize * TITLE_SIZE, SPACING).y/4
-				}, font.baseSize * TITLE_SIZE, SPACING, BLUE);
+				screen_width/2 - MeasureTextEx(font, t_t_game, font.baseSize * title_size, spacing).x/2,
+				MeasureTextEx(font, t_t_game, font.baseSize * title_size, spacing).y/4
+				}, font.baseSize * title_size, spacing, BLUE);
 		switch (screen) {
 			case 1:
 				screen = draw_play(screen_width, screen_height);

@@ -1560,21 +1560,15 @@ int GuiGetStyle(int control, int property)
 // Gui Controls Functions Definition
 //----------------------------------------------------------------------------------
 
-#define RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT 60
+int raygui_windowbox_statusbar_height = 60;
 
 // Window Box control
 int GuiWindowBox(Rectangle bounds, const char *title)
 {
-    // Window title bar height (including borders)
-    // NOTE: This define is also used by GuiMessageBox() and GuiTextInputBox()
-    #if !defined(RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT)
-        #define RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT        24
-    #endif
-
     int result = 0;
     //GuiState state = guiState;
 
-    int statusBarHeight = RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT;
+    int statusBarHeight = raygui_windowbox_statusbar_height;
 
     Rectangle statusBar = { bounds.x, bounds.y, bounds.width, (float)statusBarHeight };
     if (bounds.height < statusBarHeight*2.0f) bounds.height = statusBarHeight*2.0f;
@@ -1679,14 +1673,14 @@ int GuiPanel(Rectangle bounds, const char *text)
     GuiState state = guiState;
 
     // Text will be drawn as a header bar (if provided)
-    Rectangle statusBar = { bounds.x, bounds.y, bounds.width, (float)RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT };
-    if ((text != NULL) && (bounds.height < RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT*2.0f)) bounds.height = RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT*2.0f;
+    Rectangle statusBar = { bounds.x, bounds.y, bounds.width, (float)raygui_windowbox_statusbar_height };
+    if ((text != NULL) && (bounds.height < raygui_windowbox_statusbar_height*2.0f)) bounds.height = raygui_windowbox_statusbar_height*2.0f;
 
     if (text != NULL)
     {
         // Move panel bounds after the header bar
-        bounds.y += (float)RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT - 1;
-        bounds.height -= (float)RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT - 1;
+        bounds.y += (float)raygui_windowbox_statusbar_height - 1;
+        bounds.height -= (float)raygui_windowbox_statusbar_height - 1;
     }
 
     // Draw control
@@ -1789,14 +1783,14 @@ int GuiScrollPanel(Rectangle bounds, const char *text, Rectangle content, Vector
     if (scroll != NULL) scrollPos = *scroll;
 
     // Text will be drawn as a header bar (if provided)
-    Rectangle statusBar = { bounds.x, bounds.y, bounds.width, (float)RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT };
-    if (bounds.height < RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT*2.0f) bounds.height = RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT*2.0f;
+    Rectangle statusBar = { bounds.x, bounds.y, bounds.width, (float)raygui_windowbox_statusbar_height };
+    if (bounds.height < raygui_windowbox_statusbar_height*2.0f) bounds.height = raygui_windowbox_statusbar_height*2.0f;
 
     if (text != NULL)
     {
         // Move panel bounds after the header bar
-        bounds.y += (float)RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT - 1;
-        bounds.height -= (float)RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + 1;
+        bounds.y += (float)raygui_windowbox_statusbar_height - 1;
+        bounds.height -= (float)raygui_windowbox_statusbar_height + 1;
     }
 
     bool hasHorizontalScrollBar = (content.width > bounds.width - 2*GuiGetStyle(DEFAULT, BORDER_WIDTH))? true : false;
@@ -3762,9 +3756,9 @@ int GuiMessageBox(Rectangle bounds, const char *title, const char *message, cons
 
     Rectangle textBounds = { 0 };
     textBounds.x = bounds.x + bounds.width/2 - textWidth/2;
-    textBounds.y = bounds.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + RAYGUI_MESSAGEBOX_BUTTON_PADDING;
+    textBounds.y = bounds.y + raygui_windowbox_statusbar_height + RAYGUI_MESSAGEBOX_BUTTON_PADDING;
     textBounds.width = (float)textWidth;
-    textBounds.height = bounds.height - RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT - 3*RAYGUI_MESSAGEBOX_BUTTON_PADDING - RAYGUI_MESSAGEBOX_BUTTON_HEIGHT;
+    textBounds.height = bounds.height - raygui_windowbox_statusbar_height - 3*RAYGUI_MESSAGEBOX_BUTTON_PADDING - RAYGUI_MESSAGEBOX_BUTTON_HEIGHT;
 
     // Draw control
     //--------------------------------------------------------------------
@@ -3817,7 +3811,7 @@ int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, co
     buttonBounds.width = (bounds.width - RAYGUI_TEXTINPUTBOX_BUTTON_PADDING*(buttonCount + 1))/buttonCount;
     buttonBounds.height = RAYGUI_TEXTINPUTBOX_BUTTON_HEIGHT;
 
-    int messageInputHeight = (int)bounds.height - RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT - GuiGetStyle(STATUSBAR, BORDER_WIDTH) - RAYGUI_TEXTINPUTBOX_BUTTON_HEIGHT - 2*RAYGUI_TEXTINPUTBOX_BUTTON_PADDING;
+    int messageInputHeight = (int)bounds.height - raygui_windowbox_statusbar_height - GuiGetStyle(STATUSBAR, BORDER_WIDTH) - RAYGUI_TEXTINPUTBOX_BUTTON_HEIGHT - 2*RAYGUI_TEXTINPUTBOX_BUTTON_PADDING;
 
     Rectangle textBounds = { 0 };
     if (message != NULL)
@@ -3825,14 +3819,14 @@ int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, co
         int textSize = GetTextWidth(message) + 2;
 
         textBounds.x = bounds.x + bounds.width/2 - textSize/2;
-        textBounds.y = bounds.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT + messageInputHeight/4 - (float)GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
+        textBounds.y = bounds.y + raygui_windowbox_statusbar_height + messageInputHeight/4 - (float)GuiGetStyle(DEFAULT, TEXT_SIZE)/2;
         textBounds.width = (float)textSize;
         textBounds.height = (float)GuiGetStyle(DEFAULT, TEXT_SIZE);
     }
 
     Rectangle textBoxBounds = { 0 };
     textBoxBounds.x = bounds.x + RAYGUI_TEXTINPUTBOX_BUTTON_PADDING;
-    textBoxBounds.y = bounds.y + RAYGUI_WINDOWBOX_STATUSBAR_HEIGHT - RAYGUI_TEXTINPUTBOX_HEIGHT/2;
+    textBoxBounds.y = bounds.y + raygui_windowbox_statusbar_height - RAYGUI_TEXTINPUTBOX_HEIGHT/2;
     if (message == NULL) textBoxBounds.y = bounds.y + 24 + RAYGUI_TEXTINPUTBOX_BUTTON_PADDING;
     else textBoxBounds.y += (messageInputHeight/2 + messageInputHeight/4);
     textBoxBounds.width = bounds.width - RAYGUI_TEXTINPUTBOX_BUTTON_PADDING*2;
