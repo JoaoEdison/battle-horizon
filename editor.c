@@ -39,9 +39,9 @@ void load_models()
 	int i;
 	
 	i = 0;
-	strcpy(models[i].pathname, "models/asteroid1.glb");
+	strcpy(models[i].pathname, "data/models/asteroid1.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
-	strcpy(models[i].texturepath, "models/black-white-details-moon-texture.png");
+	strcpy(models[i].texturepath, "data/models/black-white-details-moon-texture.png");
 	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
 	models[i].has_texture = 1;
 	models[i].collision_list.first = NULL;
@@ -51,9 +51,9 @@ void load_models()
 	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	
 	i++;
-	strcpy(models[i].pathname, "models/asteroid2.glb");
+	strcpy(models[i].pathname, "data/models/asteroid2.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
-	strcpy(models[i].texturepath, "models/black-white-details-moon-texture.png");
+	strcpy(models[i].texturepath, "data/models/black-white-details-moon-texture.png");
 	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
 	models[i].has_texture = 1;
 	models[i].collision_list.first = NULL;
@@ -63,9 +63,9 @@ void load_models()
 	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	
 	i++;
-	strcpy(models[i].pathname, "models/asteroid3.glb");
+	strcpy(models[i].pathname, "data/models/asteroid3.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
-	strcpy(models[i].texturepath, "models/black-stone-texture.png");
+	strcpy(models[i].texturepath, "data/models/black-stone-texture.png");
 	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
 	models[i].has_texture = 1;
 	models[i].collision_list.first = NULL;
@@ -79,9 +79,9 @@ void load_models()
 
 	
 	i++;
-	strcpy(models[i].pathname, "models/asteroid4.glb");
+	strcpy(models[i].pathname, "data/models/asteroid4.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
-	strcpy(models[i].texturepath, "models/black-stone-texture.png");
+	strcpy(models[i].texturepath, "data/models/black-stone-texture.png");
 	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
 	models[i].has_texture = 1;
 	models[i].collision_list.first = NULL;
@@ -94,9 +94,9 @@ void load_models()
 	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	
 	i++;
-	strcpy(models[i].pathname, "models/asteroid5.glb");
+	strcpy(models[i].pathname, "data/models/asteroid5.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
-	strcpy(models[i].texturepath, "models/black-stone-texture.png");
+	strcpy(models[i].texturepath, "data/models/black-stone-texture.png");
 	models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
 	models[i].has_texture = 1;
 	models[i].collision_list.first = NULL;
@@ -109,7 +109,7 @@ void load_models()
 	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
 	
 	i++;
-	strcpy(models[i].pathname, "models/asteroid6.glb");
+	strcpy(models[i].pathname, "data/models/asteroid6.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
 	models[i].has_texture = 0;
 	models[i].collision_list.first = NULL;
@@ -126,7 +126,7 @@ void load_models()
 	
 	i++;
 	enemy_model = i;
-	strcpy(models[i].pathname, "models/enemy.glb");
+	strcpy(models[i].pathname, "data/models/enemy.glb");
 	models[i].drawing = LoadModel(models[i].pathname);
 	models[i].has_texture = 0;
 	models[i].collision_list.first = NULL;
@@ -293,7 +293,7 @@ void add_objects()
 void map_edit()
 {
 	void save_map(), open_map();
-	static char real_name[MAX_MAP_NAME_LEN+9];
+	static char real_name[MAX_MAP_NAME_LEN+14];
 	static letter_count = 0;
 	int key;
 
@@ -309,7 +309,7 @@ void map_edit()
 		}
 	} else if (IsKeyPressed(KEY_ENTER)) {
 		if (letter_count) {
-			strcpy(real_name, "data/");
+			strcpy(real_name, "data/maps/");
 			strcat(real_name, name);
 			strcat(real_name, ".map");
 			if (save_flag) {

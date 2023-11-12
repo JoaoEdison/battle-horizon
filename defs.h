@@ -45,6 +45,10 @@
 #define ENEMY_FIELD 5.0f
 #define LIMIT_DISTANCE_TO_PLAYER 10.0f
 /*score*/
-#define SCORE_PER_SHOT 2
+#define SCORE_PER_SHOT -2
 #define SCORE_PER_SECOND 4
 #define SCORE_PER_LIFE 30
+#define SCORE_PER_ENEMY 30
+
+#define STRINGIZE(X) STRINGIZE_H(X)
+#define STRINGIZE_H(X) #X

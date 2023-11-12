@@ -15,6 +15,7 @@
   You should have received a copy of the GNU General Public License along
   with this program; If not, see <http://www.gnu.org/licenses/>
 */
+
 #define PLAY
 
 #include <stdio.h>
@@ -31,7 +32,7 @@
 
 #include "battle-horizon.c"
 #define RLIGHTS_IMPLEMENTATION
-#include "shaders/rlights.h"
+#include "data/shaders/rlights.h"
 
 struct enemy_spacecraft {
 	struct model shape;
@@ -111,7 +112,7 @@ Light lights[MAX_LIGHTS];
 main(argc, argv)
 char *argv[];
 {
-	void load_map(), unload_map(), init_network(), menu(), game(), load_skybox();
+	void load_map(), init_network(), menu(), game(), load_skybox();
 	int i;
 #ifdef PLAY
 	void load_scores(), save_scores();
@@ -150,36 +151,36 @@ char *argv[];
 	screen_height = GetScreenHeight();
 #ifdef PLAY
 	config_layout(screen_width, screen_height);
-	ui_sound = LoadSound("sounds/ui.wav");
+	ui_sound = LoadSound("data/sounds/ui.wav");
 	SetSoundVolume(ui_sound, 2.0f);
 #endif
-	shot_sound = LoadSound("sounds/laser3.mp3");
+	shot_sound = LoadSound("data/sounds/laser3.mp3");
 	SetSoundVolume(shot_sound, 0.08f);
-	collision_sound = LoadSound("sounds/hit-asteroid-spacecraft.wav");
+	collision_sound = LoadSound("data/sounds/hit-asteroid-spacecraft.wav");
 	SetSoundVolume(collision_sound, 0.2f);
-	victory_sound = LoadSound("sounds/win.mp3");
-	defeat_sound = LoadSound("sounds/lost.mp3");
+	victory_sound = LoadSound("data/sounds/win.mp3");
+	defeat_sound = LoadSound("data/sounds/lost.mp3");
 	SetSoundVolume(defeat_sound, 0.5f);
-	hit_player = LoadSound("sounds/hit-player.wav");
+	hit_player = LoadSound("data/sounds/hit-player.wav");
 	SetSoundVolume(hit_player, 0.1f);
 	
-	hit_enemy.sound = LoadSound("sounds/hit-enemy.mp3");
+	hit_enemy.sound = LoadSound("data/sounds/hit-enemy.mp3");
 	hit_enemy.P = 150.0f;
-	hit_asteroid_player_shot.sound = LoadSound("sounds/hit-asteroid-player-shot.mp3");
+	hit_asteroid_player_shot.sound = LoadSound("data/sounds/hit-asteroid-player-shot.mp3");
 	hit_asteroid_player_shot.P = 150.0f;
-	hit_asteroid_enemy_shot.sound = LoadSound("sounds/hit-asteroid-enemy-shot.mp3");
+	hit_asteroid_enemy_shot.sound = LoadSound("data/sounds/hit-asteroid-enemy-shot.mp3");
 	hit_asteroid_enemy_shot.P = 75.0f;
-	hit_asteroid_enemy_spacecraft.sound = LoadSound("sounds/hit-asteroid-enemy-spacecraft.wav");
+	hit_asteroid_enemy_spacecraft.sound = LoadSound("data/sounds/hit-asteroid-enemy-spacecraft.wav");
 	hit_asteroid_enemy_spacecraft.P = 12.0f;
-	enemy_shot_sound.sound = LoadSound("sounds/enemy-shot.mp3");
+	enemy_shot_sound.sound = LoadSound("data/sounds/enemy-shot.mp3");
 	enemy_shot_sound.P = 12.0f;
-	destroyed_sound.sound = LoadSound("sounds/enemy-destroyed.mp3");
+	destroyed_sound.sound = LoadSound("data/sounds/enemy-destroyed.mp3");
 	destroyed_sound.P = 12.0f;
 	
-	mod_spaceship = LoadModel("models/spacecraft.glb");
+	mod_spaceship = LoadModel("data/models/spacecraft.glb");
 	//shaders
 	load_skybox();	
-	shader_light = LoadShader("shaders/lighting.vs", "shaders/lighting.fs");
+	shader_light = LoadShader("data/shaders/lighting.vs", "data/shaders/lighting.fs");
 	shader_light.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader_light, "viewPos");
 	for (i=0; i < mod_spaceship.materialCount; i++)
 		mod_spaceship.materials[i].shader = shader_light;
@@ -192,12 +193,11 @@ char *argv[];
 		lights[i] = CreateLight(LIGHT_POINT, Vector3Zero(), Vector3Zero(), WHITE, shader_light);
 	SetTargetFPS(60);
 #ifdef PLAY
-	font = LoadFont("font/setback.png");
 	load_scores();
 	ToggleFullscreen();
 	current_screen = menu;
 #else
-	load_map("data/easy.map");
+	load_map("data/maps/easy.map");
 	current_screen = game;
 	DisableCursor();
 #endif
@@ -308,56 +308,74 @@ int screen = 0;
 
 void menu()
 {
-	void game(), load_map();
-	int i;
+	void game(), load_map(), unload_map(), replay();
 
 	BeginDrawing();
 		ClearBackground(BLACK);
-		DrawTextEx(font, t_t_game, (Vector2){
-				screen_width/2 - MeasureTextEx(font, t_t_game, font.baseSize * title_size, spacing).x/2,
-				MeasureTextEx(font, t_t_game, font.baseSize * title_size, spacing).y/4
-				}, font.baseSize * title_size, spacing, BLUE);
+		if (screen != 5)
+			DrawTextEx(font, t_t_game, (Vector2){
+					screen_width/2 - MeasureTextEx(font, t_t_game, font.baseSize * title_size, spacing).x/2,
+					MeasureTextEx(font, t_t_game, font.baseSize * title_size, spacing).y/4
+					}, font.baseSize * title_size, spacing, BLUE);
 		switch (screen) {
 			case 1:
-				screen = draw_play(screen_width, screen_height);
+				screen = draw_play();
 				break;
 			case 2:
-				load_map(easy_map? "data/easy.map" : "data/hard.map");
-				SetMousePosition(screen_width / 2, screen_height / 2);
-				DisableCursor();
-
-				camera.position = (Vector3){ 0.0f, 5.0f, 0.0f };
-				camera.target = (Vector3){0.0f, 4.5f,-1.0f };
-				camera.up = (Vector3){ .0f, 6.0f, .0f };
-				game_state.life = MAX_LIFE;
-				game_state.state = 0;
-				game_state.prev_time = 0.0f;
-				game_state.score = total_enemies * ENEMY_LIFE * SCORE_PER_SHOT * 2;
-				while (following.first)
-					list_remove(following.first, &following);
-				while (enemy_bullets.first)
-					list_remove(enemy_bullets.first, &enemy_bullets);
-				while (shots.first)
-					list_remove(shots.first, &shots);
-				for (i=1; i < MAX_LIGHTS; i++) {
-					lights[i].enabled = 0;
-					UpdateLightValues(shader_light, lights[i]);
-				}
-				first_enemy = 0;
-				game_state.time = GetTime();
+				load_map(easy_map? "data/maps/easy.map" : "data/maps/hard.map");
+				replay();
 				current_screen = game;
 				break;
 			case 3:
-				screen = draw_about(screen_width, screen_height);
+				screen = draw_about();
 				break;
 			case 4:
 				exit_game = 1;
 				break;
+			case 5:
+				screen = score_table();
+				break;
+			case 6:
+				unload_map();
+				screen = draw_play();
+				break;
+			case 7:
+				replay();
+				current_screen = game;
+				break;
 			default:
-				screen = draw_menu(screen_width, screen_height);
+				screen = draw_menu();
 				break;
 		}
 	EndDrawing();	
+}
+
+void replay()
+{
+	int i;
+
+	SetMousePosition(screen_width / 2, screen_height / 2);
+	DisableCursor();
+
+	camera.position = (Vector3){ 0.0f, 5.0f, 0.0f };
+	camera.target = (Vector3){0.0f, 4.5f,-1.0f };
+	camera.up = (Vector3){ .0f, 6.0f, .0f };
+	game_state.life = MAX_LIFE;
+	game_state.state = 0;
+	game_state.prev_time = 0.0f;
+	game_state.total_shots = game_state.total_enemies_destroyed = 0;
+	while (following.first)
+		list_remove(following.first, &following);
+	while (enemy_bullets.first)
+		list_remove(enemy_bullets.first, &enemy_bullets);
+	while (shots.first)
+		list_remove(shots.first, &shots);
+	for (i=1; i < MAX_LIGHTS; i++) {
+		lights[i].enabled = 0;
+		UpdateLightValues(shader_light, lights[i]);
+	}
+	first_enemy = 0;
+	game_state.time = GetTime();
 }
 #endif
 
@@ -383,10 +401,15 @@ void game()
 			game_state.state = following.size? -1 : 1;
 		else if (!game_state.life)
 			game_state.state = -1;
-		if (game_state.state == -1)
-			PlaySound(defeat_sound);
-		else if (game_state.state == 1)
-			PlaySound(victory_sound);
+		if (game_state.state) {
+			PlaySound(game_state.state == 1? victory_sound : defeat_sound);
+			game_state.time = (int)(DEADLINE_SECS + game_state.time - GetTime());
+			game_state.score = game_state.life * SCORE_PER_LIFE +
+					   game_state.total_enemies_destroyed * SCORE_PER_ENEMY +
+					   game_state.time * SCORE_PER_SECOND +
+					   game_state.total_shots * SCORE_PER_SHOT;
+			game_state.score += total_enemies * ENEMY_LIFE * -SCORE_PER_SHOT;
+		}
 	}
 	game_state.distance = -camera.target.z;
 #endif
@@ -419,13 +442,13 @@ void game()
 		if (draw_ui(screen_width, screen_height, &font)) {
 			current_screen = menu;
 			EnableCursor();
-			screen = 1;
+			screen = 5;
 		}
 #endif
 	EndDrawing();
 }
 
-unsigned layers1[] = {INPUT_QTT, 20, 10, MAX_CLASSES};
+unsigned layers1[] = {INPUT_QTT, 10, MAX_CLASSES};
 create_network_arr nets = {{layers1, sizeof(layers1)/sizeof(unsigned), INPUT_QTT, 1, -1}};
 
 void init_network()
@@ -603,6 +626,9 @@ void manage_player()
 					if (--((struct enemy_spacecraft*)ptre->data)->life == 0) {
 						PLAY_SOUND_BY_DIST(((struct enemy_spacecraft*)ptre->data)->shape.position, destroyed_sound)
 						list_remove(ptre, &following);
+#ifdef PLAY
+						game_state.total_enemies_destroyed++;
+#endif
 					}
 					if (ptrbullet->light_idx > 0) {
 						DISABLE_LIGHT(ptrbullet->light_idx)
@@ -649,7 +675,7 @@ void manage_player()
 		prev_time = GetTime();
 		PlaySound(shot_sound);
 #ifdef PLAY
-		game_state.score -= SCORE_PER_SHOT;
+		game_state.total_shots += 2;
 #endif
 	}
 }
@@ -780,12 +806,53 @@ struct node **enemy;
 	return 0;
 }
 
+void update_state(enemy)
+struct enemy_spacecraft *enemy;
+{
+	struct node *next;
+	float aux;
+	float *curr_state;
+	
+	curr_state = enemy->last_state;
+	curr_state[0] = enemy->shape.position.x / MAX_DIST;
+	curr_state[1] = enemy->shape.position.y / MAX_DIST;
+	curr_state[2] = (ARRIVAL_DIST / 2 + enemy->shape.position.z) / (-ARRIVAL_DIST / 2);
+	curr_state[3] = Vector3Distance(enemy->shape.position,
+				       (Vector3){SPACESHIP_POS}) / DIAGONAL_MAP;
+	curr_state[4] = curr_state[5] = curr_state[6] = DIAGONAL_MAP;
+	for (next = asteroids.first; next; next = next->next) {
+		aux = Vector3Distance(enemy->shape.position,
+				      ((struct model*)next->data)->position);
+		if (curr_state[4] > aux) {
+			curr_state[6] = curr_state[5];
+			curr_state[5] = curr_state[4];
+			curr_state[4] = aux;
+		} else if (curr_state[5] > aux) {
+			curr_state[6] = curr_state[5];
+			curr_state[5] = aux;
+		} else if (curr_state[6] > aux)
+			curr_state[6] = aux;
+	}
+	curr_state[4] /= DIAGONAL_MAP;
+	curr_state[5] /= DIAGONAL_MAP;
+	curr_state[6] /= DIAGONAL_MAP;
+	curr_state[7] = camera.target.x / MAX_DIST;
+	curr_state[8] = (camera.target.y - 1.8f) / MAX_DIST;
+	curr_state[9] = (ARRIVAL_DIST / 2 + camera.target.z + 0.5f) / (-ARRIVAL_DIST / 2);
+	curr_state[10] = DIAGONAL_MAP;
+	for (next = shots.first; next; next = next->next) {
+		aux = Vector3Distance(enemy->shape.position, *(Vector3*)next->data);
+		if (curr_state[10] > aux)
+			curr_state[10] = aux;
+	}
+	curr_state[10] /= DIAGONAL_MAP;
+}
+
 void manage_enemies()
 {
 	struct node *next, *curr, *next_enemy;
 	struct enemy_spacecraft *ptrenemy;
-	float aux, now;
-	float curr_state[INPUT_QTT];
+	float now;
 	bool moved, collision_field;
 	int i;
 	struct enemy_shot new_shot, *ptrbullet;
@@ -922,43 +989,10 @@ void manage_enemies()
 	/*curr_state[3-6] está normalizado entre 0 e 1*/
 	for (next = following.first; next; next = next->next) {
 		ptrenemy = (struct enemy_spacecraft*)next->data;
-		curr_state[6] = curr_state[5] = curr_state[4] = DIAGONAL_MAP;
-		for (curr = asteroids.first; curr; curr = curr->next) {
-			aux = Vector3Distance(ptrenemy->shape.position,
-					      ((struct model*)curr->data)->position);
-			if (curr_state[4] > aux) {
-				curr_state[6] = curr_state[5];
-				curr_state[5] = curr_state[4];
-				curr_state[4] = aux;
-			} else if (curr_state[5] > aux) {
-				curr_state[6] = curr_state[5];
-				curr_state[5] = aux;
-			} else if (curr_state[6] > aux)
-				curr_state[6] = aux;
-		}
-		curr_state[4] /= DIAGONAL_MAP;
-		curr_state[5] /= DIAGONAL_MAP;
-		curr_state[6] /= DIAGONAL_MAP;
-		curr_state[0] = ptrenemy->shape.position.x / MAX_DIST;
-		curr_state[1] = ptrenemy->shape.position.y / MAX_DIST;
-		curr_state[2] = (ARRIVAL_DIST / 2 + ptrenemy->shape.position.z) / (-ARRIVAL_DIST / 2);
-		curr_state[7] = camera.target.x / MAX_DIST;
-		curr_state[8] = (camera.target.y - 1.8f) / MAX_DIST;
-		curr_state[9] = (ARRIVAL_DIST / 2 + camera.target.z + 0.5f) / (-ARRIVAL_DIST / 2);
-		curr_state[3] = Vector3Distance(ptrenemy->shape.position,
-					       (Vector3){SPACESHIP_POS}) / DIAGONAL_MAP;
-		curr_state[10] = DIAGONAL_MAP;
-		for (curr = shots.first; curr; curr = curr->next) {
-			aux = Vector3Distance(ptrenemy->shape.position, *(Vector3*)curr->data);
-			if (curr_state[10] > aux)
-				curr_state[10] = aux;
-		}
-		curr_state[10] /= DIAGONAL_MAP;
-		run(three_heads[ptrenemy->head], curr_state);
-		for (i=0; i < INPUT_QTT; i++)
-			ptrenemy->last_state[i] = curr_state[i];
+		update_state(ptrenemy);
+		run(three_heads[ptrenemy->head], ptrenemy->last_state);
 		ptrenemy->has_penalty = 0;
-		
+
 		if (isnan(three_heads[ptrenemy->head]->network_output[0])) {
 #ifdef PLAY
 			current_screen = menu;
@@ -1193,17 +1227,17 @@ find_light()
 void load_skybox()
 {
 	mod_skybox = LoadModelFromMesh(GenMeshCube(1.0f, 1.0f, 1.0f));
-	mod_skybox.materials[0].shader = LoadShader("shaders/skybox.vs", "shaders/skybox.fs");
+	mod_skybox.materials[0].shader = LoadShader("data/shaders/skybox.vs", "data/shaders/skybox.fs");
 
 	SetShaderValue(mod_skybox.materials[0].shader, GetShaderLocation(mod_skybox.materials[0].shader, "environmentMap"), (int[1]){ MATERIAL_MAP_CUBEMAP }, SHADER_UNIFORM_INT);
 	SetShaderValue(mod_skybox.materials[0].shader, GetShaderLocation(mod_skybox.materials[0].shader, "doGamma"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
 	SetShaderValue(mod_skybox.materials[0].shader, GetShaderLocation(mod_skybox.materials[0].shader, "vflipped"), (int[1]) { 0 }, SHADER_UNIFORM_INT);
 	
-	Shader shader_cubemap = LoadShader("shaders/cubemap.vs", "shaders/cubemap.fs");
+	Shader shader_cubemap = LoadShader("data/shaders/cubemap.vs", "data/shaders/cubemap.fs");
 
 	SetShaderValue(shader_cubemap, GetShaderLocation(shader_cubemap, "equirectangularMap"), (int[1]){ 0 }, SHADER_UNIFORM_INT);
 
-	Image img = LoadImage("models/cubemap.png");
+	Image img = LoadImage("data/models/cubemap.png");
 	mod_skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);    // CUBEMAP_LAYOUT_PANORAMA
 	UnloadImage(img);
 }
