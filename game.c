@@ -704,7 +704,7 @@ collision_spacecraft_asteroids()
 	return 0;
 }
 
-/*https://math.stackexchange.com/questions/1939423/calculate-if-vector-intersects-sphere*/
+/* https://math.stackexchange.com/questions/1939423/calculate-if-vector-intersects-sphere */
 check_collision_sphere_line(p1, p2, C, R, r)
 Vector3 *p1, *p2, *C;
 float R, r;
@@ -712,14 +712,13 @@ float R, r;
 	Vector3 U, Q;
 	float a, b, c, d;
 	
-	/*if object is slow, send to standard collision check*/	
-	if (R > BULLET_SPEED_PER_SECOND / 60)
-		return CheckCollisionSpheres(*p2, r, *C, R);
-	// true radius 
+	/* true radius */
 	R += r;
-	U = Vector3Normalize(Vector3Subtract(*p2, *p1));
-	if ((U.z > 0.0f && p2->z > C->z - R && p1->z <= C->z + R) ||
-	    (U.z <= 0.0f && p2->z < C->z + R && p1->z >= C->z - R)) {
+	/* see if the sphere is between the bullet's trajectory
+	 * somehow, it seems that it doesn't check in some direction... */
+	if (CheckCollisionBoxSphere((BoundingBox){*p2, *p1}, *C, R) ||
+	    CheckCollisionBoxSphere((BoundingBox){*p1, *p2}, *C, R)) {
+		U = Vector3Normalize(Vector3Subtract(*p2, *p1));
 		Q = Vector3Subtract(*p1, *C);
 		a = Vector3DotProduct(U, U);
 		b = 2 * Vector3DotProduct(U, Q);
