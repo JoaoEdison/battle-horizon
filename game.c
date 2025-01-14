@@ -33,6 +33,7 @@
 #include "battle-horizon.c"
 #define RLIGHTS_IMPLEMENTATION
 #include "data/shaders/rlights.h"
+#include "camera.c"
 
 struct enemy_spacecraft {
 	struct model shape;
@@ -165,7 +166,7 @@ char *argv[];
 	SetSoundVolume(hit_player, 0.1f);
 	
 	hit_enemy.sound = LoadSound("data/sounds/hit-enemy.mp3");
-	hit_enemy.P = 150.0f;
+	hit_enemy.P = 120.0f;
 	hit_asteroid_player_shot.sound = LoadSound("data/sounds/hit-asteroid-player-shot.mp3");
 	hit_asteroid_player_shot.P = 150.0f;
 	hit_asteroid_enemy_shot.sound = LoadSound("data/sounds/hit-asteroid-enemy-shot.mp3");
@@ -376,6 +377,7 @@ void replay()
 	}
 	first_enemy = 0;
 	game_state.time = GetTime();
+	ZERO_VEL
 }
 #endif
 
@@ -580,6 +582,7 @@ void manage_player()
 	if (collision && !prev_collision) {
 		PlaySound(collision_sound);
 		prev_collision = 1;
+		ZERO_VEL
 #ifdef PLAY
 		game_state.life--;
 #endif

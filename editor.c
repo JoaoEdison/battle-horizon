@@ -22,6 +22,7 @@
 #include <raymath.h>
 #include "defs.h"
 #include "battle-horizon.c"
+#include "camera.c"
 
 #define MAX_MODELS 10
 
@@ -205,7 +206,7 @@ main()
 		if (save_flag || open_flag)
 			map_edit();
 		else {
-			UpdateCamera(&camera, CAMERA_FREE);
+			UpdateCameraEditor(&camera, GetFrameTime());
 			add_objects();
 			if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
 				if (move_flag)
@@ -483,13 +484,13 @@ void draw_scene()
 		DrawText(TextFormat("Total de Modelos: %d", drawing.size + selection.size), 10, 30, 20, BLACK);
 		DrawText("[Botao Esquerdo] selecionar\n"
 			 "[Botao Direito] mover\n"
-			 "[1 - 3] adicionar modelo de pedra\n"
-			 "[4] adicionar modelo de nave inimiga\n"
-			 "[CTRL  + C] copiar\n"
-			 "[CTRL  + V] colar\n"
-			 "[CTRL  + A] selecionar todos\n"
-			 "[CTRL  + S] salvar\n"
-			 "[CTRL  + O] abrir\n"
+			 "[1 - 6] adicionar modelo de asteroide\n"
+			 "[7] adicionar nave inimiga\n"
+			 "[CTRL  + c] copiar\n"
+			 "[CTRL  + v] colar\n"
+			 "[CTRL  + a] selecionar todos os asteroides\n"
+			 "[CTRL  + s] salvar mapa\n"
+			 "[CTRL  + o] abrir mapa\n"
 			 "[SHIFT + =] aumentar\n"
 			 "[SHIFT + -] diminuir\n"
 			 "[XYZ   + -] rotaticonar\n"
