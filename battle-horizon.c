@@ -23,45 +23,45 @@
 #define MAX_MAP_NAME_LEN 60
 
 typedef struct {
-	int model_idx;
-	Vector3 position, angles;
-	float scale;
+    int model_idx;
+    Vector3 position, angles;
+    float scale;
 } model;
 
 typedef struct {
-	Model drawing;
-	char pathname[MAX_MAP_NAME_LEN];
-	char texturepath[MAX_MAP_NAME_LEN];
-	int has_texture;
-	list_linkedlist collision_list;
+    Model drawing;
+    char pathname[MAX_MAP_NAME_LEN];
+    char texturepath[MAX_MAP_NAME_LEN];
+    int has_texture;
+    list_linkedlist collision_list;
 } models_with_collisions;
 
 #define TRANFORM_SPHERE(current_model, pos_model) \
-		Vector3Transform(pos_model, \
-				MatrixMultiply( \
-					MatrixMultiply( \
-						MatrixScale(current_model->scale, current_model->scale, current_model->scale), \
-						MatrixRotateXYZ(Vector3Scale(current_model->angles, DEG2RAD)) \
-					), \
-					MatrixTranslate(current_model->position.x, \
-						current_model->position.y, \
-						current_model->position.z) \
-					) \
-				);
+        Vector3Transform(pos_model, \
+                MatrixMultiply( \
+                    MatrixMultiply( \
+                        MatrixScale(current_model->scale, current_model->scale, current_model->scale), \
+                        MatrixRotateXYZ(Vector3Scale(current_model->angles, DEG2RAD)) \
+                    ), \
+                    MatrixTranslate(current_model->position.x, \
+                        current_model->position.y, \
+                        current_model->position.z) \
+                    ) \
+                );
 
 void draw_collisions_wires(current_model, collisions)
 model *current_model;
 list_linkedlist *collisions;
 {
-	node_linkedlist *next;
-	model *ptrm;
-	Vector3 temp;
+    node_linkedlist *next;
+    model *ptrm;
+    Vector3 temp;
 
-	for (next = collisions->first; next; next = next->next) {
-		ptrm = (model*)next->data;
-		temp = TRANFORM_SPHERE(current_model, ptrm->position)
-		DrawSphereWires(temp, ptrm->scale * current_model->scale, 5, 5, GREEN);
-	}
+    for (next = collisions->first; next; next = next->next) {
+        ptrm = (model*)next->data;
+        temp = TRANFORM_SPHERE(current_model, ptrm->position)
+        DrawSphereWires(temp, ptrm->scale * current_model->scale, 5, 5, GREEN);
+    }
 }
 
 void DrawModelRotate(Model model, Vector3 position, Vector3 rotationAngle, float scale, Color tint)

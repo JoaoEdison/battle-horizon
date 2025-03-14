@@ -134,9 +134,9 @@ void CameraMoveRight2(Camera *camera, float distance)
 #define CAMERA_MOUSE_MOVE_SENSITIVITY 0.3f
 #define ACCELERATION 2.0f
 #define ZERO_VEL \
-	velocitySpaceship = SPACECRAFT_SPEED; \
-	turbo = false; \
-	acceleration = 0.0f;
+    velocitySpaceship = SPACECRAFT_SPEED; \
+    turbo = false; \
+    acceleration = 0.0f;
 
 float velocitySpaceship = SPACECRAFT_SPEED;
 float acceleration = 0.0f;
@@ -153,7 +153,7 @@ void UpdateMyCamera(Camera *camera, float deltatime)
     CameraPitch2(camera, -mousePositionDelta.y * CAMERA_MOUSE_MOVE_SENSITIVITY * deltatime, true, true, false);
     
     if (IsKeyPressed(KEY_SPACE)) {
-	turbo = !turbo;
+    turbo = !turbo;
         velocitySpaceship = turbo? SPACECRAFT_SPEED_MAX : SPACECRAFT_SPEED;
     }
     camera->target.z -= (velocitySpaceship+acceleration) * deltatime;
@@ -223,11 +223,11 @@ void UpdateCameraEditor(Camera *camera, float deltatime)
     CameraYaw2(camera, -mousePositionDelta.x * CAMERA_MOUSE_MOVE_SENSITIVITY_EDITOR * deltatime, false);
     CameraPitch2(camera, -mousePositionDelta.y * CAMERA_MOUSE_MOVE_SENSITIVITY_EDITOR * deltatime, true, false, false);
     if (IsKeyPressed(KEY_SPACE)) {
-		turbo = !turbo;
+        turbo = !turbo;
         velocityCameraEditor = turbo? CAMERA_SPEED_MAX_EDITOR : CAMERA_SPEED_EDITOR;
     }
-	if (IsKeyDown(KEY_W)) CameraMoveForward2(camera, velocityCameraEditor * deltatime);
-	if (IsKeyDown(KEY_A)) CameraMoveRight2(camera, -velocityCameraEditor * deltatime);
-	if (IsKeyDown(KEY_S)) CameraMoveForward2(camera, -velocityCameraEditor * deltatime);
-	if (IsKeyDown(KEY_D)) CameraMoveRight2(camera, velocityCameraEditor * deltatime);
+    if (IsKeyDown(KEY_W)) CameraMoveForward2(camera, velocityCameraEditor * deltatime);
+    if (IsKeyDown(KEY_A)) CameraMoveRight2(camera, -velocityCameraEditor * deltatime);
+    if (IsKeyDown(KEY_S)) CameraMoveForward2(camera, -velocityCameraEditor * deltatime);
+    if (IsKeyDown(KEY_D)) CameraMoveRight2(camera, velocityCameraEditor * deltatime);
 }
