@@ -1,6 +1,6 @@
 /*
   Battle Horizon is a 3D space battle game in Raylib
-  Copyright (C) 2023  João Edison Roso Manica
+  Copyright (C) 2023-2025  João E. R. Manica
   
   Battle Horizon is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 
 #define MAX_MODELS 10
 
-struct models_with_collisions models[MAX_MODELS];
+models_with_collisions models[MAX_MODELS];
 short model_count;
 int enemy_model;
 
@@ -36,7 +36,7 @@ int enemy_model;
 
 void load_models()
 {
-	struct model new_box = { 0 };
+	model new_box = { 0 };
 	int i;
 	
 	i = 0;
@@ -49,7 +49,7 @@ void load_models()
 	models[i].collision_list.size = 0;
 	new_box.scale = 1.0f;
 	new_box.position = (Vector3){ 0 };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	
 	i++;
 	strcpy(models[i].pathname, "data/models/asteroid2.glb");
@@ -61,7 +61,7 @@ void load_models()
 	models[i].collision_list.size = 0;
 	new_box.scale = 1.0f;
 	new_box.position = (Vector3){ 0 };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	
 	i++;
 	strcpy(models[i].pathname, "data/models/asteroid3.glb");
@@ -73,10 +73,10 @@ void load_models()
 	models[i].collision_list.size = 0;
 	new_box.scale = .8f;
 	new_box.position = (Vector3){ -.2f, .4f, .2f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	new_box.scale = .9f;
 	new_box.position = (Vector3){ .2f, -.2f, .0f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 
 	
 	i++;
@@ -89,10 +89,10 @@ void load_models()
 	models[i].collision_list.size = 0;
 	new_box.scale = 0.7f;
 	new_box.position = (Vector3){ 0.0f, 0.0f, 0.2f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	new_box.scale = 0.6f;
 	new_box.position = (Vector3){ 0.0f,-0.5f, 0.0f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	
 	i++;
 	strcpy(models[i].pathname, "data/models/asteroid5.glb");
@@ -104,10 +104,10 @@ void load_models()
 	models[i].collision_list.size = 0;
 	new_box.scale = 0.7f;
 	new_box.position = (Vector3){ 0 };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	new_box.scale = 0.6f;
 	new_box.position = (Vector3){ 0.0f,  0.5f, 0.2f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	
 	i++;
 	strcpy(models[i].pathname, "data/models/asteroid6.glb");
@@ -117,13 +117,13 @@ void load_models()
 	models[i].collision_list.size = 0;
 	new_box.scale = 1.5f;
 	new_box.position = (Vector3){ 0 };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	new_box.scale = 1.5f;
 	new_box.position = (Vector3){ 0.0f, 1.0f, 0.0f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	new_box.scale = 1.5f;
 	new_box.position = (Vector3){ 0.0f, -1.0f, 0.0f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	
 	i++;
 	enemy_model = i;
@@ -134,55 +134,57 @@ void load_models()
 	models[i].collision_list.size = 0;
 	new_box.scale = 1.5f;
 	new_box.position = (Vector3){ 0 };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	new_box.scale = 1.1f;
 	new_box.position = (Vector3){ 2.3f, .0f, .0f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	new_box.scale = 1.1f;
 	new_box.position = (Vector3){-2.3f, .0f, .0f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	new_box.scale = .8f;
 	new_box.position = (Vector3){ 2.1f, 2.0f, .0f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	new_box.scale = .8f;
 	new_box.position = (Vector3){-2.1f, 2.0f, .0f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	new_box.scale = .8f;
 	new_box.position = (Vector3){ 2.2f,-2.0f, .0f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 	new_box.scale = .8f;
 	new_box.position = (Vector3){-2.2f,-2.0f, .0f };
-	list_insert(&new_box, &models[i].collision_list, sizeof(struct model));
+	insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
 
 	model_count = 7;
 }
 
-struct list drawing = { 0 };
+list_linkedlist drawing = { 0 };
 Camera camera = { 0 };
 
-struct group {
+typedef struct {
 	Vector3 position;
 	float radius;
-	struct list group_selection;
-} new_group = { 0 };
+	list_linkedlist group_selection;
+} group;
 
-struct list groups = { 0 };
-struct list selection = { 0 };
-struct node *selected;
-struct list ln = { 0 };
+group new_group = { 0 };
+
+list_linkedlist groups = { 0 };
+list_linkedlist selection = { 0 };
+node_linkedlist *selected;
+list_linkedlist ln = { 0 };
 Vector3 lastpos;
 
 bool save_flag = false, open_flag = false, move_flag = false;
 char name[MAX_MAP_NAME_LEN];
 
-struct model new_model;
+model new_model;
 
 main()
 {
 	void map_edit(), add_objects(), draw_scene(), get_in_volume();
 	void trans_single(), trans_selection(), trans_group();
-	struct node *get_selected();
-	struct node *next, *curr;
+	node_linkedlist *get_selected();
+	node_linkedlist *next, *curr;
 	
 	new_group.radius = 1.0f;
 
@@ -225,21 +227,21 @@ main()
 			if (IsKeyDown(KEY_LEFT_CONTROL)) {
 				if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
 					if (selected) {
-						list_insert(selected->data, &selection, sizeof(struct model));
-						list_remove(selected, &drawing);
+						insert_linkedlist(selected->data, &selection, sizeof(model));
+						remove_linkedlist(selected, &drawing);
 						selected = NULL;
 					}
 					if ((next = get_selected(&drawing))) {
-						list_insert(next->data, &selection, sizeof(struct model));
-						list_remove(next, &drawing);
+						insert_linkedlist(next->data, &selection, sizeof(model));
+						remove_linkedlist(next, &drawing);
 					}
 				} else if (IsKeyPressed(KEY_A))
 					for (next=drawing.first; next;) {
-						if (((struct model*)next->data)->model != enemy_model) {
-							list_insert(next->data, &selection, sizeof(struct model));
+						if (((model*)next->data)->model_idx != enemy_model) {
+							insert_linkedlist(next->data, &selection, sizeof(model));
 							curr = next;
 							next = next->next;				
-							list_remove(curr, &drawing);
+							remove_linkedlist(curr, &drawing);
 							continue;
 						}
 						next = next->next;
@@ -252,8 +254,8 @@ main()
 				selected = get_selected(&drawing);
 				if (!selected)
 					while (selection.first) {
-						list_insert(selection.last->data, &drawing, sizeof(struct model));
-						list_remove(selection.last, &selection);
+						insert_linkedlist(selection.last->data, &drawing, sizeof(model));
+						remove_linkedlist(selection.last, &selection);
 					}
 			}
 		}
@@ -282,12 +284,12 @@ void add_objects()
 		number_pressed = 6;
 	if (number_pressed >= 0) {
 		NEW_MODEL
-		new_model.model = number_pressed;
-		list_insert(&new_model, &drawing, sizeof(struct model));
+		new_model.model_idx = number_pressed;
+		insert_linkedlist(&new_model, &drawing, sizeof(model));
 	}
 	if (IsKeyPressed(KEY_G)) {
 		new_group.position = camera.target;
-		list_insert(&new_group, &groups, sizeof(struct group));
+		insert_linkedlist(&new_group, &groups, sizeof(group));
 	}
 }
 
@@ -329,21 +331,21 @@ void map_edit()
 	}
 }
 
-struct node *get_selected(l)
-struct list *l;
+node_linkedlist *get_selected(l)
+list_linkedlist *l;
 {
-	struct list *collisions;
-	struct node *next, *next_collision;
-	struct model *target;
-	struct model *ptrm;
+	list_linkedlist *collisions;
+	node_linkedlist *next, *next_collision;
+	model *target;
+	model *ptrm;
 	float new_scale;
 	Vector3 temp;
 
 	for (next = l->first; next; next = next->next) {
-		target = (struct model*)next->data;
-		collisions = &models[target->model].collision_list;
+		target = (model*)next->data;
+		collisions = &models[target->model_idx].collision_list;
 		for (next_collision = collisions->first; next_collision; next_collision = next_collision->next) {
-			ptrm = (struct model*)next_collision->data;
+			ptrm = (model*)next_collision->data;
 			temp = TRANFORM_SPHERE(target, ptrm->position)
 			new_scale = ptrm->scale * target->scale;
 			if (CheckCollisionSpheres(temp, new_scale, camera.target, .3f))
@@ -357,19 +359,19 @@ struct list *l;
 void save_map(name)
 char *name;
 {
-	struct node *next1, *next2;
-	struct model *current;
+	node_linkedlist *next1, *next2;
+	model *current;
 	FILE *fp;
 	short i, count = 0, map[MAX_MODELS];
-	struct list present = { 0 };
+	list_linkedlist present = { 0 };
 	
 	for (i = 0; i < MAX_MODELS; i++)
 		map[i] = -1;
 	for (next1 = drawing.first; next1; next1 = next1->next) {
-		i = ((struct model*)next1->data)->model;
+		i = ((model*)next1->data)->model_idx;
 		if (map[i] < 0) {
 			map[i] = count++;
-			list_insert(&i, &present, sizeof(short));
+			insert_linkedlist(&i, &present, sizeof(short));
 		}
 	}
 	fp = fopen(name, "wb");
@@ -379,7 +381,7 @@ char *name;
 		fprintf(fp, "%s %hd\n", models[i].pathname, models[i].collision_list.size);
 		fprintf(fp, "%hhd %s\n", models[i].has_texture, models[i].has_texture? models[i].texturepath : "0");
 		for (next2 = models[i].collision_list.first; next2; next2 = next2->next) {
-			current = (struct model*)next2->data;
+			current = (model*)next2->data;
 			fprintf(fp, "%.4f %.4f %.4f %.4f\n",
 					current->position.x,
 					current->position.y,
@@ -389,8 +391,8 @@ char *name;
 	}
 	fprintf(fp, "%hd\n", drawing.size);
 	for (next1 = drawing.first; next1; next1 = next1->next) {
-		current = (struct model*)next1->data;
-		fprintf(fp, "%hhu\n", map[current->model]);
+		current = (model*)next1->data;
+		fprintf(fp, "%hhu\n", map[current->model_idx]);
 		fprintf(fp, "%.4f %.4f %.4f %.4f\n",
 				current->position.x,
 				current->position.y,
@@ -401,13 +403,13 @@ char *name;
 	}
 	fclose(fp);
 	while (present.first)
-		list_remove(present.first, &present);
+		remove_linkedlist(present.first, &present);
 }
 
 void open_map(name)
 char name[];
 {
-	struct model new;
+	model new;
 	char model_name[MAX_MAP_NAME_LEN], texture_name[MAX_MAP_NAME_LEN];
 	FILE *fp;
 	short map[MAX_MODELS];
@@ -433,8 +435,8 @@ char name[];
 	}
 	fscanf(fp, "%hd\n", &j);
 	while (j--) {
-		fscanf(fp, "%u\n", &new.model);
-		new.model = map[new.model];
+		fscanf(fp, "%u\n", &new.model_idx);
+		new.model_idx = map[new.model_idx];
 		fscanf(fp, "%f %f %f %f\n",
 				&new.position.x,
 				&new.position.y,
@@ -442,20 +444,20 @@ char name[];
 				&new.scale);
 		fscanf(fp, "%f %f %f\n", &new.angles.x,
 				&new.angles.y, &new.angles.z);
-		list_insert(&new, &drawing, sizeof(struct model));
+		insert_linkedlist(&new, &drawing, sizeof(model));
 	}
 	fclose(fp);
 }
 
 #define DRAW_MODEL(PTR, COLOR) \
-		draw_model = (struct model*)PTR->data; \
-		DrawModelRotate(models[draw_model->model].drawing, draw_model->position, draw_model->angles, draw_model->scale, COLOR); \
-		draw_collisions_wires(draw_model, &models[draw_model->model].collision_list);
+		draw_model = (model*)PTR->data; \
+		DrawModelRotate(models[draw_model->model_idx].drawing, draw_model->position, draw_model->angles, draw_model->scale, COLOR); \
+		draw_collisions_wires(draw_model, &models[draw_model->model_idx].collision_list);
 
 void draw_scene()
 {
-	struct model *draw_model;
-	struct node *next, *current;
+	model *draw_model;
+	node_linkedlist *next, *current;
 
 	BeginDrawing();
 		ClearBackground(RAYWHITE);
@@ -471,8 +473,8 @@ void draw_scene()
 				DRAW_MODEL(next, RED)
 			}
 			for (next = groups.first; next; next = next->next) {
-				DrawSphereWires(((struct group*)next->data)->position, ((struct group*)next->data)->radius, 24, 24, BLACK);
-				current = ((struct group*)next->data)->group_selection.first;
+				DrawSphereWires(((group*)next->data)->position, ((group*)next->data)->radius, 24, 24, BLACK);
+				current = ((group*)next->data)->group_selection.first;
 				for (; current; current = current->next) {
 					DRAW_MODEL(current, ORANGE)
 				}
@@ -506,44 +508,44 @@ void draw_scene()
 void trans_single()
 {
 	if (move_flag)
-		((struct model*)selected->data)->position = camera.target;
+		((model*)selected->data)->position = camera.target;
 	if (IsKeyDown(KEY_X))
-		((struct model*)selected->data)->angles.x += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+		((model*)selected->data)->angles.x += IsKeyDown(KEY_MINUS)? -.8f : .8f;
 	if (IsKeyDown(KEY_Y))
-		((struct model*)selected->data)->angles.y += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+		((model*)selected->data)->angles.y += IsKeyDown(KEY_MINUS)? -.8f : .8f;
 	if (IsKeyDown(KEY_Z))
-		((struct model*)selected->data)->angles.z += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+		((model*)selected->data)->angles.z += IsKeyDown(KEY_MINUS)? -.8f : .8f;
 	if (IsKeyDown(KEY_LEFT_SHIFT)) {
 		if (IsKeyDown(KEY_EQUAL))
-			((struct model*)selected->data)->scale += 1.0f;
+			((model*)selected->data)->scale += 1.0f;
 		else if (IsKeyDown(KEY_MINUS))
-			((struct model*)selected->data)->scale -= 1.0f;
+			((model*)selected->data)->scale -= 1.0f;
 	} else if (IsKeyDown(KEY_LEFT_CONTROL)) {
 		if (IsKeyPressed(KEY_C)) {
-			new_model.model = ((struct model*)selected->data)->model;
-			new_model.angles = ((struct model*)selected->data)->angles;
-			new_model.scale = ((struct model*)selected->data)->scale;
+			new_model.model_idx = ((model*)selected->data)->model_idx;
+			new_model.angles = ((model*)selected->data)->angles;
+			new_model.scale = ((model*)selected->data)->scale;
 		} else if (IsKeyPressed(KEY_V)) {
 			new_model.position = camera.target;
-			list_insert(&new_model, &drawing, sizeof(struct model));
+			insert_linkedlist(&new_model, &drawing, sizeof(model));
 		}
 	}
 	if (IsKeyPressed(KEY_DELETE)) {
-		list_remove(selected, &drawing);
+		remove_linkedlist(selected, &drawing);
 		selected = NULL;
 	}
 }
 
 #define MOVE_MANY(GROUP, PTR) \
 		for (next = GROUP.first; next; next = next->next) { \
-			((struct PTR*)next->data)->position.x += camera.target.x - lastpos.x; \
-			((struct PTR*)next->data)->position.y += camera.target.y - lastpos.y; \
-			((struct PTR*)next->data)->position.z += camera.target.z - lastpos.z; \
+			((PTR*)next->data)->position.x += camera.target.x - lastpos.x; \
+			((PTR*)next->data)->position.y += camera.target.y - lastpos.y; \
+			((PTR*)next->data)->position.z += camera.target.z - lastpos.z; \
 		}
 
 void trans_selection()
 {
-	struct node *next;
+	node_linkedlist *next;
 
 	if (move_flag) {
 		MOVE_MANY(selection, model)
@@ -551,76 +553,76 @@ void trans_selection()
 	}
 	if (IsKeyDown(KEY_X))
 		for (next = selection.first; next; next = next->next)
-			((struct model*)next->data)->angles.x += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+			((model*)next->data)->angles.x += IsKeyDown(KEY_MINUS)? -.8f : .8f;
 	if (IsKeyDown(KEY_Y))
 		for (next = selection.first; next; next = next->next)
-			((struct model*)next->data)->angles.y += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+			((model*)next->data)->angles.y += IsKeyDown(KEY_MINUS)? -.8f : .8f;
 	if (IsKeyDown(KEY_Z))
 		for (next = selection.first; next; next = next->next)
-			((struct model*)next->data)->angles.z += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+			((model*)next->data)->angles.z += IsKeyDown(KEY_MINUS)? -.8f : .8f;
 	if (IsKeyPressed(KEY_R))
 		for (next = selection.first; next; next = next->next) {
-			((struct model*)next->data)->angles.x = GetRandomValue(0, 359);
-			((struct model*)next->data)->angles.y = GetRandomValue(0, 359);
-			((struct model*)next->data)->angles.z = GetRandomValue(0, 359);
+			((model*)next->data)->angles.x = GetRandomValue(0, 359);
+			((model*)next->data)->angles.y = GetRandomValue(0, 359);
+			((model*)next->data)->angles.z = GetRandomValue(0, 359);
 		}
 	if (IsKeyDown(KEY_LEFT_SHIFT)) {
 		if (IsKeyDown(KEY_EQUAL))
 			for (next = selection.first; next; next = next->next)
-				((struct model*)next->data)->scale += 1.0f;
+				((model*)next->data)->scale += 1.0f;
 		else if (IsKeyDown(KEY_MINUS))
 			for (next = selection.first; next; next = next->next)
-				((struct model*)next->data)->scale -= 1.0f;
+				((model*)next->data)->scale -= 1.0f;
 	} else if (IsKeyDown(KEY_LEFT_CONTROL)) {
 		if (IsKeyPressed(KEY_C)) {
 			for (next = selection.first; next; next = next->next) {
-				new_model.model = ((struct model*)next->data)->model;
-				new_model.angles = ((struct model*)next->data)->angles;
-				new_model.scale = ((struct model*)next->data)->scale;
-				new_model.position = ((struct model*)next->data)->position;
-				list_insert(&new_model, &ln, sizeof(struct model));
+				new_model.model_idx = ((model*)next->data)->model_idx;
+				new_model.angles = ((model*)next->data)->angles;
+				new_model.scale = ((model*)next->data)->scale;
+				new_model.position = ((model*)next->data)->position;
+				insert_linkedlist(&new_model, &ln, sizeof(model));
 			}
 			lastpos = camera.target;
 		} else if (IsKeyPressed(KEY_V)) {
 			for (next = ln.first; next; next = next->next) {
-				((struct model*)next->data)->position.x += camera.target.x - lastpos.x;
-				((struct model*)next->data)->position.y += camera.target.y - lastpos.y;
-				((struct model*)next->data)->position.z += camera.target.z - lastpos.z;
-				list_insert(next->data, &drawing, sizeof(struct model));
+				((model*)next->data)->position.x += camera.target.x - lastpos.x;
+				((model*)next->data)->position.y += camera.target.y - lastpos.y;
+				((model*)next->data)->position.z += camera.target.z - lastpos.z;
+				insert_linkedlist(next->data, &drawing, sizeof(model));
 			}
 			while (ln.size)
-				list_remove(ln.last, &ln);
+				remove_linkedlist(ln.last, &ln);
 		}
 	}
 	if (IsKeyPressed(KEY_DELETE))
 		while (selection.size)
-			list_remove(selection.last, &selection);
+			remove_linkedlist(selection.last, &selection);
 }
 
 void get_in_volume(in_list, out_list, group_shape)
-struct list *in_list, *out_list;
-struct group *group_shape;
+list_linkedlist *in_list, *out_list;
+group *group_shape;
 {
-	struct node *next, *next_collision, *current;
-	struct model *target, *ptrm;
-	struct list *collisions;
+	node_linkedlist *next, *next_collision, *current;
+	model *target, *ptrm;
+	list_linkedlist *collisions;
 	Vector3 temp;
 	float new_scale;
 	bool found;
 
 	for (next = in_list->first; next;) {
 		found = false;
-		target = (struct model*)next->data;
-		collisions = &models[target->model].collision_list;
+		target = (model*)next->data;
+		collisions = &models[target->model_idx].collision_list;
 		for (next_collision = collisions->first; next_collision; next_collision = next_collision->next) {
-			ptrm = (struct model*)next_collision->data;
+			ptrm = (model*)next_collision->data;
 			temp = TRANFORM_SPHERE(target, ptrm->position)
 			new_scale = ptrm->scale * target->scale;
 			if (CheckCollisionSpheres(temp, new_scale, group_shape->position, group_shape->radius)) {
-				list_insert(next->data, out_list, sizeof(struct model));
+				insert_linkedlist(next->data, out_list, sizeof(model));
 				current = next;
 				next = next->next;
-				list_remove(current, in_list);
+				remove_linkedlist(current, in_list);
 				found = true;
 				break;
 			}
@@ -632,76 +634,76 @@ struct group *group_shape;
 
 #define RELEASE_GROUP_SELECTION(LIST) \
 	while (LIST.first) { \
-		list_insert(LIST.first->data, &drawing, sizeof(struct model)); \
-		list_remove(LIST.first, &LIST); \
+		insert_linkedlist(LIST.first->data, &drawing, sizeof(model)); \
+		remove_linkedlist(LIST.first, &LIST); \
 	}
 
 #define ROTATE_GROUP(AXIS, DEGREE) \
 	for (next = groups.first; next; next = next->next) { \
-		current = ((struct group*)next->data)->group_selection.first; \
+		current = ((group*)next->data)->group_selection.first; \
 		for (; current; current = current->next) { \
 			direction = Vector3RotateByAxisAngle( \
-				Vector3Subtract(((struct model*)current->data)->position, \
-						((struct group*)next->data)->position), \
+				Vector3Subtract(((model*)current->data)->position, \
+						((group*)next->data)->position), \
 				AXIS, \
 				DEGREE); \
-			((struct model*)current->data)->position = Vector3Add(direction, ((struct group*)next->data)->position); \
+			((model*)current->data)->position = Vector3Add(direction, ((group*)next->data)->position); \
 		} \
 	}
 
 void trans_group()
 {
-	struct node *next, *current;
-	struct list *l;
+	node_linkedlist *next, *current;
+	list_linkedlist *l;
 	Vector3 direction;
 
 	if (IsKeyPressed(KEY_B))
 		for (next = groups.first; next; next = next->next)
-			get_in_volume(&drawing, &(((struct group*)next->data)->group_selection), next->data);
+			get_in_volume(&drawing, &(((group*)next->data)->group_selection), next->data);
 	if (IsKeyPressed(KEY_V))
 		for (next = groups.first; next; next = next->next) {
-			l = &((struct group*)next->data)->group_selection;
+			l = &((group*)next->data)->group_selection;
 			while (l->first) {
-				list_insert(l->first->data, &selection, sizeof(struct model));
-				list_remove(l->first, l);
+				insert_linkedlist(l->first->data, &selection, sizeof(model));
+				remove_linkedlist(l->first, l);
 			}
 		}
 	if (IsKeyPressed(KEY_R))
 		for (next = groups.first; next; next = next->next)
-			RELEASE_GROUP_SELECTION(((struct group*)next->data)->group_selection)
+			RELEASE_GROUP_SELECTION(((group*)next->data)->group_selection)
 	if (IsKeyPressed(KEY_F))
 		while (groups.first) {
-			RELEASE_GROUP_SELECTION(((struct group*)groups.first->data)->group_selection)
-			list_remove(groups.first, &groups);
+			RELEASE_GROUP_SELECTION(((group*)groups.first->data)->group_selection)
+			remove_linkedlist(groups.first, &groups);
 		}
 	if (move_flag) {
 		MOVE_MANY(groups, group)
 		for (current = groups.first; current; current = current->next)
-			MOVE_MANY(((struct group*)current->data)->group_selection, model)
+			MOVE_MANY(((group*)current->data)->group_selection, model)
 		lastpos = camera.target;
 	}
 	if (IsKeyDown(KEY_LEFT_SHIFT)) {
 		if (IsKeyDown(KEY_EQUAL)) {
 			for (next = groups.first; next; next = next->next) {
-				((struct group*)next->data)->radius += 1.0f;
-				current = ((struct group*)next->data)->group_selection.first;
+				((group*)next->data)->radius += 1.0f;
+				current = ((group*)next->data)->group_selection.first;
 				for (; current; current = current->next) {
-					direction = Vector3Normalize(Vector3Subtract(((struct model*)current->data)->position, ((struct group*)next->data)->position));
-					((struct model*)current->data)->position.x += direction.x;
-					((struct model*)current->data)->position.y += direction.y;
-					((struct model*)current->data)->position.z += direction.z;
+					direction = Vector3Normalize(Vector3Subtract(((model*)current->data)->position, ((group*)next->data)->position));
+					((model*)current->data)->position.x += direction.x;
+					((model*)current->data)->position.y += direction.y;
+					((model*)current->data)->position.z += direction.z;
 				}
 			}
 		} else if (IsKeyDown(KEY_MINUS))
 			for (next = groups.first; next; next = next->next) {
-				((struct group*)next->data)->radius -= 1.0f;
-				current = ((struct group*)next->data)->group_selection.first;
+				((group*)next->data)->radius -= 1.0f;
+				current = ((group*)next->data)->group_selection.first;
 				for (; current; current = current->next) {
-					direction = Vector3Normalize(Vector3Subtract(((struct group*)next->data)->position,
-								                     ((struct model*)current->data)->position));
-					((struct model*)current->data)->position.x += direction.x;
-					((struct model*)current->data)->position.y += direction.y;
-					((struct model*)current->data)->position.z += direction.z;
+					direction = Vector3Normalize(Vector3Subtract(((group*)next->data)->position,
+								                     ((model*)current->data)->position));
+					((model*)current->data)->position.x += direction.x;
+					((model*)current->data)->position.y += direction.y;
+					((model*)current->data)->position.z += direction.z;
 				}
 			}
 	}

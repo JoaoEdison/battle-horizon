@@ -31,12 +31,12 @@
 Font font;
 Sound ui_sound;
 
-struct score_entry {
+typedef struct {
 	char name[MAX_NAME_LEN];
 	int day, month, year, score, seconds;
-};
+} score_entry;
 
-struct vector_d scores_easy, scores_hard;
+vector_d scores_easy, scores_hard;
 
 struct {
 	int life, state, distance, score;
@@ -100,12 +100,12 @@ void config_layout(width, height)
 sort_scores(x, y)
 void *x, *y;
 {
-	struct score_entry *ptrx;
-	struct score_entry *ptry;
+	score_entry *ptrx;
+	score_entry *ptry;
 	int sub;
 	
-	ptrx = (struct score_entry*)x;
-	ptry = (struct score_entry*)y;
+	ptrx = (score_entry*)x;
+	ptry = (score_entry*)y;
 	if ((sub = ptry->score - ptrx->score))
 		return sub;
 	if ((sub = ptry->year - ptrx->year))
@@ -124,12 +124,12 @@ void *x, *y;
 static void save_score()
 {
 	time_t time_raw;
-	struct score_entry *new_score;
+	score_entry *new_score;
 	struct tm *ptrtime;
-	struct vector_d *scorelist;
+	vector_d *scorelist;
 	
 	scorelist = easy_map? &scores_easy : &scores_hard;
-	new_score = (struct score_entry*) LAST_SPACE_PTR(scorelist);
+	new_score = (score_entry*) LAST_SPACE_PTR(scorelist);
 	scorelist->nmemb++;
 	strcpy(new_score->name, name);
 	new_score->score = game_state.score;
@@ -227,14 +227,14 @@ draw_menu()
 				}, font.baseSize * score_size, spacing, GetColor(GuiGetStyle(STATUSBAR, BASE)));
 
 void draw_scores(v, x_left, x_right, y_begin)
-struct vector_d *v;
+vector_d *v;
 {
-	struct score_entry *ptrsc;
+	score_entry *ptrsc;
 	char buffer[50];
 	int inc, curr_inc, i;
 
 	for (i=0; i < v->nmemb; i++) {	
-		ptrsc = (struct score_entry*) AT_PTR(v, i);
+		ptrsc = (score_entry*) AT_PTR(v, i);
 		curr_inc = 0;
 		inc = (x_right - x_left) / ratio_width_score_column;
 		sprintf(buffer, "%d", ptrsc->score);

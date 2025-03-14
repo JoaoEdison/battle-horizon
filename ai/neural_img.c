@@ -1,6 +1,6 @@
 /*
  OCRC, a AI for optical character recognition written in C
- Copyright (C) 2023-2023 João Edison Roso Manica
+ Copyright (C) 2023-2025 João E. R. Manica
 
  OCRC is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -23,27 +23,27 @@
 
 #include "neural_img.h"
 
-struct layer {
+typedef struct {
 	float **w, *b, *z, *a;
 	float **err_w, *err_b, *aux_b;
 	float **change_w, *change_b; 
 	unsigned n, prev_n;
-};
+} layer;
 
-struct net {
-	struct layer *arr;
+typedef struct net {
+	layer *arr;
 	float *input_first;
 	struct net **in_nets;
 	unsigned char num_layers, output_original, num_in_nets;
 	short out_id;
-};
+} net;
 
 void run(model, flat_input)
 bignet_ptr model;
 float *flat_input;
 {
-	struct net *ptrn;
-	struct layer *ptrl;
+	net *ptrn;
+	layer *ptrl;
 	//float sum;
 	int i;
 
@@ -87,8 +87,8 @@ float *flat_input;
 void ini_backpr(model, n)
 bignet_ptr model;
 {
-	struct net *ptrn;
-	struct layer *ptrl;
+	net *ptrn;
+	layer *ptrl;
 	int i;
 
 	model->N = n;
@@ -113,8 +113,8 @@ bignet_ptr model;
 void end_backpr(model)
 bignet_ptr model;
 {
-	struct net *ptrn;
-	struct layer *ptrl;
+	net *ptrn;
+	layer *ptrl;
 
 	for (ptrn=model->arr; ptrn < model->arr + model->num_nets; ptrn++)
 		for (ptrl=ptrn->arr; ptrl < ptrn->arr + ptrn->num_layers; ptrl++) {
@@ -129,8 +129,8 @@ bignet_ptr model;
 void clear_backpr(model)
 bignet_ptr model;
 {
-	struct net *ptrn;
-	struct layer *ptrl;
+	net *ptrn;
+	layer *ptrl;
 	int i, j;
 	
 	for (ptrn=model->arr; ptrn < model->arr + model->num_nets; ptrn++)
@@ -148,8 +148,8 @@ void backpr(model, flat_input, expected)
 bignet_ptr model;
 float *flat_input, *expected;
 {
-	struct net *ptrn, *ptrn_prev;
-	struct layer *ptrl;
+	net *ptrn, *ptrn_prev;
+	layer *ptrl;
 	float *ptrberr;
 	int i, next_col;
 	
@@ -207,8 +207,8 @@ float *flat_input, *expected;
 void apply_backpr(model)
 bignet_ptr model;
 {
-	struct net *ptrn;
-	struct layer *ptrl;
+	net *ptrn;
+	layer *ptrl;
 	float change;
 	int i, j;
 		
@@ -232,7 +232,7 @@ bignet_ptr model;
 bignet_ptr init_net_topology(nets, n, verbose)
 create_network_arr nets;
 {
-	struct net *ptrn;
+	net *ptrn;
 	create_network_ptr ptrc;
 	int i, j, k;
 	long unsigned *amount;
@@ -243,15 +243,15 @@ create_network_arr nets;
 	model->back_on = 0;
 	if (verbose)
 		puts("Allocating memory to the neural network...");
-	model->arr = malloc(sizeof(struct net) * model->num_nets);
+	model->arr = malloc(sizeof(net) * model->num_nets);
 	amount = calloc(model->num_nets, sizeof(long unsigned));
 	// for each network
 	for (ptrn=model->arr, ptrc=nets; ptrn < model->arr + model->num_nets; ptrn++, ptrc++) {
 		ptrn->num_layers = ptrc->num_layers;
-		ptrn->arr = malloc(sizeof(struct layer) * ptrc->num_layers);
+		ptrn->arr = malloc(sizeof(layer) * ptrc->num_layers);
 		ptrn->out_id = ptrc->output;
 		ptrn->input_first = NULL;
-		ptrn->in_nets = malloc(sizeof(struct net*) * (model->num_nets - 1));
+		ptrn->in_nets = malloc(sizeof(net*) * (model->num_nets - 1));
 		ptrn->num_in_nets = 0;
 		for (i=0; i < ptrn->num_layers; i++) {
 			ptrn->arr[i].n = ptrc->neurons_per_layer[i];
@@ -297,8 +297,8 @@ create_network_arr nets;
 void init_random_weights(model)
 bignet_ptr model;
 {
-	struct net *ptrn;
-	struct layer *ptrl;
+	net *ptrn;
+	layer *ptrl;
 	int i, j;
 	
 	for (ptrn=model->arr; ptrn < model->arr + model->num_nets; ptrn++) {
@@ -317,8 +317,8 @@ char file_name[];
 	FILE *fp;
 	int i, j;
 	create_network_ptr nets, ptrc;
-	struct net *ptrn;
-	struct layer *ptrl;
+	net *ptrn;
+	layer *ptrl;
 	bignet_ptr model;
 	
 	if (verbose)
@@ -378,8 +378,8 @@ bignet_ptr model;
 char file_name[];
 {
 	FILE *fp;
-	struct net *ptrn;
-	struct layer *ptrl;
+	net *ptrn;
+	layer *ptrl;
 	int i;
 	
 	puts("Saving network weights and biases to: weights...");

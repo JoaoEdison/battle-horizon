@@ -1,6 +1,6 @@
 /*
   Battle Horizon is a 3D space battle game in Raylib
-  Copyright (C) 2023  João Edison Roso Manica
+  Copyright (C) 2023-2025  João E. R. Manica
   
   Battle Horizon is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

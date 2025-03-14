@@ -1,6 +1,6 @@
 /*
   Battle Horizon is a 3D space battle game in Raylib
-  Copyright (C) 2023  João Edison Roso Manica
+  Copyright (C) 2023-2025  João E. R. Manica
   
   Battle Horizon is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -22,19 +22,19 @@
 
 #define MAX_MAP_NAME_LEN 60
 
-struct model {
-	int model;
+typedef struct {
+	int model_idx;
 	Vector3 position, angles;
 	float scale;
-};
+} model;
 
-struct models_with_collisions {
+typedef struct {
 	Model drawing;
 	char pathname[MAX_MAP_NAME_LEN];
 	char texturepath[MAX_MAP_NAME_LEN];
 	int has_texture;
-	struct list collision_list;
-};
+	list_linkedlist collision_list;
+} models_with_collisions;
 
 #define TRANFORM_SPHERE(current_model, pos_model) \
 		Vector3Transform(pos_model, \
@@ -50,15 +50,15 @@ struct models_with_collisions {
 				);
 
 void draw_collisions_wires(current_model, collisions)
-struct model *current_model;
-struct list *collisions;
+model *current_model;
+list_linkedlist *collisions;
 {
-	struct node *next;
-	struct model *ptrm;
+	node_linkedlist *next;
+	model *ptrm;
 	Vector3 temp;
 
 	for (next = collisions->first; next; next = next->next) {
-		ptrm = (struct model*)next->data;
+		ptrm = (model*)next->data;
 		temp = TRANFORM_SPHERE(current_model, ptrm->position)
 		DrawSphereWires(temp, ptrm->scale * current_model->scale, 5, 5, GREEN);
 	}

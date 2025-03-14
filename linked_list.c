@@ -1,6 +1,6 @@
 /*
   Battle Horizon is a 3D space battle game in Raylib
-  Copyright (C) 2023  João Edison Roso Manica
+  Copyright (C) 2023-2025  João E. R. Manica
   
   Battle Horizon is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,24 +21,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct node {
+typedef struct {
 	void *data, *next, *prev;
-};
+} node_linkedlist;
 
-struct list {
-	struct node *first, *last;
+typedef struct {
+	node_linkedlist *first, *last;
 	int size;
 	int (*cmp)();
-};
+} list_linkedlist;
 
-void list_insert(item, l, size)
+void insert_linkedlist(item, l, size)
 void *item;
-struct list *l;
+list_linkedlist *l;
 size_t size;
 {
-	struct node *new;
+	node_linkedlist *new;
 
-	new = malloc(sizeof(struct node));
+	new = malloc(sizeof(node_linkedlist));
 	new->data = malloc(size);
 	if (!l->first)
 		l->last = l->first = new;
@@ -51,11 +51,11 @@ size_t size;
 	l->size++;
 }
 
-void list_remove(item, l)
-struct node *item;
-struct list *l;
+void remove_linkedlist(item, l)
+node_linkedlist *item;
+list_linkedlist *l;
 {
-	struct node *prev;
+	node_linkedlist *prev;
 	
 	if (item == l->first && item == l->last) {
 		l->first = l->last = NULL;
@@ -82,11 +82,11 @@ struct list *l;
 	free(item);
 }
 
-in_list(item, l)
+in_linkedlist(item, l)
 void *item;
-struct list *l;
+list_linkedlist *l;
 {
-	struct node *next;
+	node_linkedlist *next;
 
 	for (next = l->first; next; next = next->next)
 		if (l->cmp(next->data, item))
