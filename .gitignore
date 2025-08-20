@@ -2,3 +2,4 @@ todos/*
 cemiterio.c
 out.txt
 data/scores.csv
+build/
