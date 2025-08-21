@@ -1,6 +1,7 @@
 #include <raylib.h>
 #include <raymath.h>
-#include "defs.h"
+
+#include "../include/defs.h"
 
 /* --- From the library --- */
 

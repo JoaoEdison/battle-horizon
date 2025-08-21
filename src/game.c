@@ -20,9 +20,12 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include <raylib.h>
 #include <raymath.h>
-#include "defs.h"
+
+#include "../include/defs.h"
+
 #include "../lib/ocrc/src/neural_net.h"
 #include "../lib/ocrc/src/model.h"
 

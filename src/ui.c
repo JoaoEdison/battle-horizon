@@ -20,13 +20,14 @@
 
 #include <raylib.h>
 
+#define RAYGUI_IMPLEMENTATION
+#include "../external/raygui/raygui.c"
+
 #include "../lib/arrays/array.c"
 #include "../lib/linkedlist/linkedlist.h"
 
-#include "defs.h"
-#include "translate.c"
-#define RAYGUI_IMPLEMENTATION
-#include "raygui.c"
+#include "../include/defs.h"
+#include "../include/translate.h"
 
 #define PADDING 6
 

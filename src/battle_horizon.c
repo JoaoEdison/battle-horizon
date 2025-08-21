@@ -18,7 +18,8 @@
 
 #include <raylib.h>
 #include <raymath.h>
-#include "defs.h"
+
+#include "../include/defs.h"
 #include "../lib/linkedlist/linkedlist.h"
 
 #define MAX_MAP_NAME_LEN 60
