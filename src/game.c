@@ -37,7 +37,7 @@
 #include "../res/shaders/rlights.h"
 #include "camera.c"
 
-struct enemy_spacecraft {
+typedef struct {
     model shape;
     float dist;
     unsigned char head;
@@ -52,18 +52,18 @@ struct enemy_spacecraft {
         unsigned faraway : 1;
     } penalties;
     bool has_penalty;
-};
+} enemy_spacecraft;
 
-struct shot {
+typedef struct {
     Vector3 position;
     short light_idx;
-};
+} shot;
 
-struct enemy_shot {
-    struct shot properties;
+typedef struct {
+    shot properties;
     float state[INPUT_QTT];
     unsigned char head;
-};
+} enemy_shot;
 
 #define WEIGHTS_LOCATION "res/weights"
 
@@ -75,9 +75,12 @@ struct enemy_shot {
 neural_net_bignet_ptr three_heads[HEAD_COUNT];
 
 linkedlist_list enemy_errors[HEAD_COUNT] = { 0 };
-struct enemy_error {
+
+typedef struct {
     float x[INPUT_QTT], y[MAX_CLASSES];
-} current_error;
+} enemy_error;
+
+enemy_error current_error;
 
 models_with_collisions *models;
 short model_count;
@@ -85,7 +88,7 @@ linkedlist_list asteroids = { 0 };
 linkedlist_list following = { 0 };
 linkedlist_list shots = { 0 };
 linkedlist_list enemy_bullets = { 0 };
-struct enemy_spacecraft new_enemy;
+enemy_spacecraft new_enemy;
 
 int screen_width, screen_height;
 Camera camera;
@@ -229,7 +232,7 @@ char *argv[];
     save_scores();
 #else
     if (following.nmemb)
-        neural_net_save_weights(three_heads[((struct enemy_spacecraft*)following.head->value)->head], WEIGHTS_LOCATION);
+        neural_net_save_weights(three_heads[((enemy_spacecraft*)following.head->value)->head], WEIGHTS_LOCATION);
 #endif
     CloseAudioDevice();
 }
@@ -384,7 +387,7 @@ void game()
 {
     void manage_player(), manage_enemies(), draw_scene();
     linkedlist_node *next;
-    struct enemy_error *ptrerr;
+    enemy_error *ptrerr;
     float now, prev_back;
     int i;
 
@@ -420,7 +423,7 @@ void game()
             three_heads[i]->N = enemy_errors[i].nmemb;
             neural_net_clear_backpr(three_heads[i]);
             for (next = enemy_errors[i].head; next; next = next->next) {
-                ptrerr = (struct enemy_error*)next->value;
+                ptrerr = (enemy_error*)next->value;
                 neural_net_backpr(three_heads[i], ptrerr->x, ptrerr->y);
             }
             linkedlist_erasefree(enemy_errors + i);
@@ -562,7 +565,7 @@ void manage_player()
     static bool prev_collision = 0;
     static float prev_time = 0;
     linkedlist_node *curr, *next, *ptre;
-    struct shot *ptrbullet, new_bullet;
+    shot *ptrbullet, new_bullet;
     float now;
     int i;
     bool collision;
@@ -590,7 +593,7 @@ void manage_player()
         prev_collision = 0;
     /*player shots*/
     for (next = shots.head; next;) {
-        ptrbullet = (struct shot *)next->value;
+        ptrbullet = (shot *)next->value;
         // bullets moves 
         if (ptrbullet->position.z > -2 * ARRIVAL_DIST) {
             next_position = (Vector3){ptrbullet->position.x,
@@ -611,22 +614,22 @@ void manage_player()
                // penalty
             if (collision_bullet_field(&ptrbullet->position, &next_position, &ptre)) {
                 now = GetTime();
-                if (now - ((struct enemy_spacecraft*)ptre->value)->last_shooted_penalty > 0.5f) {
+                if (now - ((enemy_spacecraft*)ptre->value)->last_shooted_penalty > 0.5f) {
                     for (i=0; i < MAX_CLASSES; i++)
                         current_error.y[i] = 0.0f;
                     current_error.y[GetRandomValue(0,3)] = 1.0f;
                     for (i=0; i < INPUT_QTT; i++)
-                        current_error.x[i] = ((struct enemy_spacecraft*)ptre->value)->last_state[i];
-                    linkedlist_appendlloc(&enemy_errors[((struct enemy_spacecraft*)ptre->value)->head],
+                        current_error.x[i] = ((enemy_spacecraft*)ptre->value)->last_state[i];
+                    linkedlist_appendlloc(&enemy_errors[((enemy_spacecraft*)ptre->value)->head],
                                           &current_error,
-                                          sizeof(struct enemy_error));
+                                          sizeof(enemy_error));
                 }
-                ((struct enemy_spacecraft*)ptre->value)->last_shooted_penalty = now;
+                ((enemy_spacecraft*)ptre->value)->last_shooted_penalty = now;
                 // damage
                 if (collision_bullet_enemies(&ptrbullet->position, &next_position, &ptre)) {
                     PLAY_SOUND_BY_DIST(ptrbullet->position, hit_enemy)
-                    if (--((struct enemy_spacecraft*)ptre->value)->life == 0) {
-                        PLAY_SOUND_BY_DIST(((struct enemy_spacecraft*)ptre->value)->shape.position, destroyed_sound)
+                    if (--((enemy_spacecraft*)ptre->value)->life == 0) {
+                        PLAY_SOUND_BY_DIST(((enemy_spacecraft*)ptre->value)->shape.position, destroyed_sound)
                         LINKEDLIST_DELETEFREE(&following, ptre);
 #ifdef PLAY
                         game_state.total_enemies_destroyed++;
@@ -666,7 +669,7 @@ void manage_player()
         new_bullet.light_idx = find_light();
         lights[new_bullet.light_idx].color = PLAYER_BULLET_COLOR;
         lights[new_bullet.light_idx].enabled = 1;
-        linkedlist_appendlloc(&shots, &new_bullet, sizeof(struct shot));
+        linkedlist_appendlloc(&shots, &new_bullet, sizeof(shot));
 
         new_bullet.position.x += 3.22f;
         new_bullet.position.y -= 0.05f;
@@ -674,7 +677,7 @@ void manage_player()
         new_bullet.light_idx = find_light();
         lights[new_bullet.light_idx].color = PLAYER_BULLET_COLOR;
         lights[new_bullet.light_idx].enabled = 1;
-        linkedlist_appendlloc(&shots, &new_bullet, sizeof(struct shot));
+        linkedlist_appendlloc(&shots, &new_bullet, sizeof(shot));
 
         prev_time = GetTime();
         PlaySound(shot_sound);
@@ -773,7 +776,7 @@ linkedlist_node **enemy;
     model *current;
 
     for (next = following.head; next; next = next->next) {
-        current = &((struct enemy_spacecraft*)next->value)->shape; 
+        current = &((enemy_spacecraft*)next->value)->shape; 
         if (check_collision_sphere_line(bullet_prev, bullet_after, &current->position,
                             current->scale * ENEMY_FIELD, PLAYER_BULLET_SIZE)) {
             *enemy = next;
@@ -794,7 +797,7 @@ linkedlist_node **enemy;
     float new_scale;
 
     for (next = following.head; next; next = next->next) {
-        current = &((struct enemy_spacecraft*)next->value)->shape; 
+        current = &((enemy_spacecraft*)next->value)->shape; 
         collisions_list = &models[current->model_idx].collision_list;
         for (next_box = collisions_list->head; next_box; next_box = next_box->next) {
             ptrm = (model*)next_box->value;
@@ -810,7 +813,7 @@ linkedlist_node **enemy;
 }
 
 void update_state(enemy)
-struct enemy_spacecraft *enemy;
+enemy_spacecraft *enemy;
 {
     linkedlist_node *next;
     float aux;
@@ -854,17 +857,17 @@ struct enemy_spacecraft *enemy;
 void manage_enemies()
 {
     linkedlist_node *next, *curr, *next_enemy;
-    struct enemy_spacecraft *ptrenemy;
+    enemy_spacecraft *ptrenemy;
     float now;
     bool moved, collision_field;
     int i;
-    struct enemy_shot new_shot, *ptrbullet;
+    enemy_shot new_shot, *ptrbullet;
     model *asteroid;
     Vector3 next_position;
     
     for (next_enemy = following.head; next_enemy;) {
         moved = 0;
-        ptrenemy = (struct enemy_spacecraft*)next_enemy->value;
+        ptrenemy = (enemy_spacecraft*)next_enemy->value;
         collision_field = collision_enemy_field_asteroids(&ptrenemy->shape.position, ptrenemy->shape.scale * ENEMY_FIELD, &asteroid);
         now = GetTime();
         if (collision_field) {
@@ -901,7 +904,7 @@ void manage_enemies()
         next_enemy = next_enemy->next;
     }
     for (next = enemy_bullets.head; next;) {
-        ptrbullet = (struct enemy_shot*)next->value;
+        ptrbullet = (enemy_shot*)next->value;
         // bullet move
         if (ptrbullet->properties.position.z < MAX_DIST) {
             next_position = (Vector3){ptrbullet->properties.position.x,
@@ -916,7 +919,7 @@ void manage_enemies()
                 current_error.y[GetRandomValue(0,3)] = 1.0f;
                 for (i=0; i < INPUT_QTT; i++)
                     current_error.x[i] = ptrbullet->state[i];
-                linkedlist_appendlloc(&enemy_errors[ptrbullet->head], &current_error, sizeof(struct enemy_error));
+                linkedlist_appendlloc(&enemy_errors[ptrbullet->head], &current_error, sizeof(enemy_error));
                 if (ptrbullet->properties.light_idx > 0) {
                     DISABLE_LIGHT(ptrbullet->properties.light_idx)
                 }
@@ -936,7 +939,7 @@ void manage_enemies()
                 current_error.y[4] = 1.0f;
                 for (i=0; i < INPUT_QTT; i++)
                     current_error.x[i] = ptrbullet->state[i];
-                linkedlist_appendlloc(&enemy_errors[ptrbullet->head], &current_error, sizeof(struct enemy_error));
+                linkedlist_appendlloc(&enemy_errors[ptrbullet->head], &current_error, sizeof(enemy_error));
                 if (ptrbullet->properties.light_idx > 0) {
                     DISABLE_LIGHT(ptrbullet->properties.light_idx)
                 }
@@ -963,14 +966,14 @@ void manage_enemies()
             current_error.y[GetRandomValue(0,3)] = 1.0f;
             for (i=0; i < INPUT_QTT; i++)
                 current_error.x[i] = ptrbullet->state[i];
-            linkedlist_appendlloc(&enemy_errors[ptrbullet->head], &current_error, sizeof(struct enemy_error));
+            linkedlist_appendlloc(&enemy_errors[ptrbullet->head], &current_error, sizeof(enemy_error));
             curr = next;
             next = next->next;
             LINKEDLIST_DELETEFREE(&enemy_bullets, curr);
         }
     }
     for (next = following.head; next; next = next->next) {
-        ptrenemy = (struct enemy_spacecraft*)next->value;
+        ptrenemy = (enemy_spacecraft*)next->value;
         if (ptrenemy->has_penalty) {
             for (i=0; i < MAX_CLASSES; i++)
                 current_error.y[i] = 0.0f;
@@ -979,7 +982,7 @@ void manage_enemies()
                 current_error.y[4] = 1.0f;
             for (i=0; i < INPUT_QTT; i++)
                 current_error.x[i] = ptrenemy->last_state[i];
-            linkedlist_appendlloc(&enemy_errors[ptrenemy->head], &current_error, sizeof(struct enemy_error));
+            linkedlist_appendlloc(&enemy_errors[ptrenemy->head], &current_error, sizeof(enemy_error));
             ptrenemy->penalties.collision = 0; 
             ptrenemy->penalties.dont_shoot = 0;
             ptrenemy->penalties.dont_move = 0;
@@ -989,7 +992,7 @@ void manage_enemies()
     /*curr_state[0-2] está normalizado entre -1 e 1*/
     /*curr_state[3-6] está normalizado entre 0 e 1*/
     for (next = following.head; next; next = next->next) {
-        ptrenemy = (struct enemy_spacecraft*)next->value;
+        ptrenemy = (enemy_spacecraft*)next->value;
         update_state(ptrenemy);
         neural_net_run(three_heads[ptrenemy->head], ptrenemy->last_state);
         ptrenemy->has_penalty = 0;
@@ -1049,7 +1052,7 @@ void manage_enemies()
                 for (i=0; i < INPUT_QTT; i++)
                     new_shot.state[i] = ptrenemy->last_state[i];
                 new_shot.head = ptrenemy->head;
-                linkedlist_appendlloc(&enemy_bullets, &new_shot, sizeof(struct enemy_shot));
+                linkedlist_appendlloc(&enemy_bullets, &new_shot, sizeof(enemy_shot));
                 PLAY_SOUND_BY_DIST(new_shot.properties.position, enemy_shot_sound);
             }
         } else if (now - ptrenemy->last_shoot > 1.0f) {
@@ -1098,7 +1101,7 @@ void draw_scene()
             new_enemy.shape = enemies[i];
             new_enemy.dist = camera.target.z - enemies[i].position.z;
             new_enemy.head = GetRandomValue(0, HEAD_COUNT-1);
-            linkedlist_appendlloc(&following, &new_enemy, sizeof(struct enemy_spacecraft));
+            linkedlist_appendlloc(&following, &new_enemy, sizeof(enemy_spacecraft));
             first_enemy++;
             continue;
         }
@@ -1115,13 +1118,13 @@ void draw_scene()
                 MODEL_COLOR);
     }
     for (next = following.head; next; next = next->next) {
-        draw_model = &((struct enemy_spacecraft*)next->value)->shape;
-        draw_model->position.z -= ((struct enemy_spacecraft*)next->value)->dist - fabs(camera.target.z - draw_model->position.z);
+        draw_model = &((enemy_spacecraft*)next->value)->shape;
+        draw_model->position.z -= ((enemy_spacecraft*)next->value)->dist - fabs(camera.target.z - draw_model->position.z);
         DrawModelRotate(models[draw_model->model_idx].drawing,
                 draw_model->position,
                 draw_model->angles,
                 draw_model->scale,
-                ((struct enemy_spacecraft*)next->value)->color);
+                ((enemy_spacecraft*)next->value)->color);
 #ifndef PLAY
         draw_collisions_wires(draw_model, &models[draw_model->model_idx].collision_list);
         DrawSphereWires((Vector3){draw_model->position.x,
@@ -1134,7 +1137,7 @@ void draw_scene()
               (Vector3){SPACESHIP_POS}, 
               Vector3Distance(draw_model->position, 
                           (Vector3){SPACESHIP_POS}) >
-                              ((struct enemy_spacecraft*)next->value)->dist + LIMIT_DISTANCE_TO_PLAYER? RED : BLUE);
+                              ((enemy_spacecraft*)next->value)->dist + LIMIT_DISTANCE_TO_PLAYER? RED : BLUE);
 #endif
     }
     DrawModel(mod_spaceship, (Vector3){0.0f, 0.0f, 0.0f}, 1.0f, MODEL_COLOR);
@@ -1149,7 +1152,7 @@ void draw_scene()
 }
 
 collision_enemy_asteroid(enemy, asteroid)
-struct enemy_spacecraft *enemy;
+enemy_spacecraft *enemy;
 model *asteroid;
 {
     linkedlist_node *next, *next_enemy_box;
