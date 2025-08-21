@@ -31,8 +31,8 @@ short model_count;
 int enemy_model;
 
 #define NEW_MODEL new_model.position = camera.target; \
-          new_model.angles = (Vector3){ .0f, .0f, .0f }; \
-          new_model.scale = 10.0f;
+                  new_model.angles = (Vector3){ .0f, .0f, .0f }; \
+                  new_model.scale = 10.0f;
 
 void load_models()
 {
@@ -45,11 +45,11 @@ void load_models()
     strcpy(models[i].texturepath, "res/models/black-white-details-moon-texture.png");
     models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
     models[i].has_texture = 1;
-    models[i].collision_list.first = NULL;
-    models[i].collision_list.size = 0;
+    models[i].collision_list.head = NULL;
+    models[i].collision_list.nmemb = 0;
     new_box.scale = 1.0f;
     new_box.position = (Vector3){ 0 };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     
     i++;
     strcpy(models[i].pathname, "res/models/asteroid2.glb");
@@ -57,11 +57,11 @@ void load_models()
     strcpy(models[i].texturepath, "res/models/black-white-details-moon-texture.png");
     models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
     models[i].has_texture = 1;
-    models[i].collision_list.first = NULL;
-    models[i].collision_list.size = 0;
+    models[i].collision_list.head = NULL;
+    models[i].collision_list.nmemb = 0;
     new_box.scale = 1.0f;
     new_box.position = (Vector3){ 0 };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     
     i++;
     strcpy(models[i].pathname, "res/models/asteroid3.glb");
@@ -69,14 +69,14 @@ void load_models()
     strcpy(models[i].texturepath, "res/models/black-stone-texture.png");
     models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
     models[i].has_texture = 1;
-    models[i].collision_list.first = NULL;
-    models[i].collision_list.size = 0;
+    models[i].collision_list.head = NULL;
+    models[i].collision_list.nmemb = 0;
     new_box.scale = .8f;
     new_box.position = (Vector3){ -.2f, .4f, .2f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     new_box.scale = .9f;
     new_box.position = (Vector3){ .2f, -.2f, .0f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
 
     
     i++;
@@ -85,14 +85,14 @@ void load_models()
     strcpy(models[i].texturepath, "res/models/black-stone-texture.png");
     models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
     models[i].has_texture = 1;
-    models[i].collision_list.first = NULL;
-    models[i].collision_list.size = 0;
+    models[i].collision_list.head = NULL;
+    models[i].collision_list.nmemb = 0;
     new_box.scale = 0.7f;
     new_box.position = (Vector3){ 0.0f, 0.0f, 0.2f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     new_box.scale = 0.6f;
     new_box.position = (Vector3){ 0.0f,-0.5f, 0.0f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     
     i++;
     strcpy(models[i].pathname, "res/models/asteroid5.glb");
@@ -100,78 +100,78 @@ void load_models()
     strcpy(models[i].texturepath, "res/models/black-stone-texture.png");
     models[i].drawing.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = LoadTexture(models[i].texturepath);
     models[i].has_texture = 1;
-    models[i].collision_list.first = NULL;
-    models[i].collision_list.size = 0;
+    models[i].collision_list.head = NULL;
+    models[i].collision_list.nmemb = 0;
     new_box.scale = 0.7f;
     new_box.position = (Vector3){ 0 };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     new_box.scale = 0.6f;
     new_box.position = (Vector3){ 0.0f,  0.5f, 0.2f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     
     i++;
     strcpy(models[i].pathname, "res/models/asteroid6.glb");
     models[i].drawing = LoadModel(models[i].pathname);
     models[i].has_texture = 0;
-    models[i].collision_list.first = NULL;
-    models[i].collision_list.size = 0;
+    models[i].collision_list.head = NULL;
+    models[i].collision_list.nmemb = 0;
     new_box.scale = 1.5f;
     new_box.position = (Vector3){ 0 };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     new_box.scale = 1.5f;
     new_box.position = (Vector3){ 0.0f, 1.0f, 0.0f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     new_box.scale = 1.5f;
     new_box.position = (Vector3){ 0.0f, -1.0f, 0.0f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     
     i++;
     enemy_model = i;
     strcpy(models[i].pathname, "res/models/enemy.glb");
     models[i].drawing = LoadModel(models[i].pathname);
     models[i].has_texture = 0;
-    models[i].collision_list.first = NULL;
-    models[i].collision_list.size = 0;
+    models[i].collision_list.head = NULL;
+    models[i].collision_list.nmemb = 0;
     new_box.scale = 1.5f;
     new_box.position = (Vector3){ 0 };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     new_box.scale = 1.1f;
     new_box.position = (Vector3){ 2.3f, .0f, .0f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     new_box.scale = 1.1f;
     new_box.position = (Vector3){-2.3f, .0f, .0f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     new_box.scale = .8f;
     new_box.position = (Vector3){ 2.1f, 2.0f, .0f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     new_box.scale = .8f;
     new_box.position = (Vector3){-2.1f, 2.0f, .0f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     new_box.scale = .8f;
     new_box.position = (Vector3){ 2.2f,-2.0f, .0f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
     new_box.scale = .8f;
     new_box.position = (Vector3){-2.2f,-2.0f, .0f };
-    insert_linkedlist(&new_box, &models[i].collision_list, sizeof(model));
+    linkedlist_appendlloc(&models[i].collision_list, &new_box, sizeof(model));
 
     model_count = 7;
 }
 
-list_linkedlist drawing = { 0 };
+linkedlist_list drawing = { 0 };
 Camera camera = { 0 };
 
 typedef struct {
     Vector3 position;
     float radius;
-    list_linkedlist group_selection;
+    linkedlist_list group_selection;
 } group;
 
 group new_group = { 0 };
 
-list_linkedlist groups = { 0 };
-list_linkedlist selection = { 0 };
-node_linkedlist *selected;
-list_linkedlist ln = { 0 };
+linkedlist_list groups = { 0 };
+linkedlist_list selection = { 0 };
+linkedlist_node *selected;
+linkedlist_list ln = { 0 };
 Vector3 lastpos;
 
 bool save_flag = false, open_flag = false, move_flag = false;
@@ -183,8 +183,8 @@ main()
 {
     void map_edit(), add_objects(), draw_scene(), get_in_volume();
     void trans_single(), trans_selection(), trans_group();
-    node_linkedlist *get_selected();
-    node_linkedlist *next, *curr;
+    linkedlist_node *get_selected();
+    linkedlist_node *next, *curr;
     
     new_group.radius = 1.0f;
 
@@ -220,43 +220,35 @@ main()
             }
             if (selected)
                 trans_single();
-            if (selection.size)
+            if (selection.nmemb)
                 trans_selection();
-            if (groups.size)
+            if (groups.nmemb)
                 trans_group();
             if (IsKeyDown(KEY_LEFT_CONTROL)) {
                 if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                     if (selected) {
-                        insert_linkedlist(selected->data, &selection, sizeof(model));
-                        remove_linkedlist(selected, &drawing);
+                        LINKEDLIST_MOVE_ONE(&selection, &drawing, selected);
                         selected = NULL;
                     }
-                    if ((next = get_selected(&drawing))) {
-                        insert_linkedlist(next->data, &selection, sizeof(model));
-                        remove_linkedlist(next, &drawing);
-                    }
-                } else if (IsKeyPressed(KEY_A))
-                    for (next=drawing.first; next;) {
-                        if (((model*)next->data)->model_idx != enemy_model) {
-                            insert_linkedlist(next->data, &selection, sizeof(model));
-                            curr = next;
-                            next = next->next;                
-                            remove_linkedlist(curr, &drawing);
+                    if ((next = get_selected(&drawing)))
+                        LINKEDLIST_MOVE_ONE(&selection, &drawing, next);
+                } else if (IsKeyPressed(KEY_A)) {
+                    for (next=drawing.head; next;) {
+                        if (((model*)next->value)->model_idx != enemy_model) {
+                            linkedlist_append(&selection, next->value);
+                            next = linkedlist_delete(&drawing, next);
                             continue;
                         }
                         next = next->next;
                     }
-                else if (IsKeyPressed(KEY_S))
+                } else if (IsKeyPressed(KEY_S))
                     save_flag = true;
                 else if (IsKeyPressed(KEY_O))
                     open_flag = true;
             } else if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
                 selected = get_selected(&drawing);
                 if (!selected)
-                    while (selection.first) {
-                        insert_linkedlist(selection.last->data, &drawing, sizeof(model));
-                        remove_linkedlist(selection.last, &selection);
-                    }
+                    linkedlist_move_all_last_first(&drawing, &selection);
             }
         }
         draw_scene();
@@ -285,11 +277,11 @@ void add_objects()
     if (number_pressed >= 0) {
         NEW_MODEL
         new_model.model_idx = number_pressed;
-        insert_linkedlist(&new_model, &drawing, sizeof(model));
+        linkedlist_appendlloc(&drawing, &new_model, sizeof(model));
     }
     if (IsKeyPressed(KEY_G)) {
         new_group.position = camera.target;
-        insert_linkedlist(&new_group, &groups, sizeof(group));
+        linkedlist_appendlloc(&groups, &new_group, sizeof(group));
     }
 }
 
@@ -331,21 +323,21 @@ void map_edit()
     }
 }
 
-node_linkedlist *get_selected(l)
-list_linkedlist *l;
+linkedlist_node *get_selected(l)
+linkedlist_list *l;
 {
-    list_linkedlist *collisions;
-    node_linkedlist *next, *next_collision;
+    linkedlist_list *collisions;
+    linkedlist_node *next, *next_collision;
     model *target;
     model *ptrm;
     float new_scale;
     Vector3 temp;
 
-    for (next = l->first; next; next = next->next) {
-        target = (model*)next->data;
+    for (next = l->head; next; next = next->next) {
+        target = (model*)next->value;
         collisions = &models[target->model_idx].collision_list;
-        for (next_collision = collisions->first; next_collision; next_collision = next_collision->next) {
-            ptrm = (model*)next_collision->data;
+        for (next_collision = collisions->head; next_collision; next_collision = next_collision->next) {
+            ptrm = (model*)next_collision->value;
             temp = TRANFORM_SPHERE(target, ptrm->position)
             new_scale = ptrm->scale * target->scale;
             if (CheckCollisionSpheres(temp, new_scale, camera.target, .3f))
@@ -359,29 +351,29 @@ list_linkedlist *l;
 void save_map(name)
 char *name;
 {
-    node_linkedlist *next1, *next2;
+    linkedlist_node *next1, *next2;
     model *current;
     FILE *fp;
     short i, count = 0, map[MAX_MODELS];
-    list_linkedlist present = { 0 };
+    linkedlist_list present = { 0 };
     
     for (i = 0; i < MAX_MODELS; i++)
         map[i] = -1;
-    for (next1 = drawing.first; next1; next1 = next1->next) {
-        i = ((model*)next1->data)->model_idx;
+    for (next1 = drawing.head; next1; next1 = next1->next) {
+        i = ((model*)next1->value)->model_idx;
         if (map[i] < 0) {
             map[i] = count++;
-            insert_linkedlist(&i, &present, sizeof(short));
+            linkedlist_appendlloc(&present, &i, sizeof(short));
         }
     }
     fp = fopen(name, "wb");
     fprintf(fp, "%hd\n", count);
-    for (next1 = present.first; next1; next1 = next1->next) {
-        i = *(short*)next1->data;
-        fprintf(fp, "%s %hd\n", models[i].pathname, models[i].collision_list.size);
+    for (next1 = present.head; next1; next1 = next1->next) {
+        i = *(short*)next1->value;
+        fprintf(fp, "%s %hd\n", models[i].pathname, models[i].collision_list.nmemb);
         fprintf(fp, "%hhd %s\n", models[i].has_texture, models[i].has_texture? models[i].texturepath : "0");
-        for (next2 = models[i].collision_list.first; next2; next2 = next2->next) {
-            current = (model*)next2->data;
+        for (next2 = models[i].collision_list.head; next2; next2 = next2->next) {
+            current = (model*)next2->value;
             fprintf(fp, "%.4f %.4f %.4f %.4f\n",
                     current->position.x,
                     current->position.y,
@@ -389,9 +381,9 @@ char *name;
                     current->scale);
         }
     }
-    fprintf(fp, "%hd\n", drawing.size);
-    for (next1 = drawing.first; next1; next1 = next1->next) {
-        current = (model*)next1->data;
+    fprintf(fp, "%hd\n", drawing.nmemb);
+    for (next1 = drawing.head; next1; next1 = next1->next) {
+        current = (model*)next1->value;
         fprintf(fp, "%hhu\n", map[current->model_idx]);
         fprintf(fp, "%.4f %.4f %.4f %.4f\n",
                 current->position.x,
@@ -402,8 +394,7 @@ char *name;
                 current->angles.y, current->angles.z);
     }
     fclose(fp);
-    while (present.first)
-        remove_linkedlist(present.first, &present);
+    linkedlist_erasefree(&present);
 }
 
 void open_map(name)
@@ -444,37 +435,37 @@ char name[];
                 &new.scale);
         fscanf(fp, "%f %f %f\n", &new.angles.x,
                 &new.angles.y, &new.angles.z);
-        insert_linkedlist(&new, &drawing, sizeof(model));
+        linkedlist_appendlloc(&drawing, &new, sizeof(model));
     }
     fclose(fp);
 }
 
 #define DRAW_MODEL(PTR, COLOR) \
-        draw_model = (model*)PTR->data; \
+        draw_model = (model*)PTR->value; \
         DrawModelRotate(models[draw_model->model_idx].drawing, draw_model->position, draw_model->angles, draw_model->scale, COLOR); \
         draw_collisions_wires(draw_model, &models[draw_model->model_idx].collision_list);
 
 void draw_scene()
 {
     model *draw_model;
-    node_linkedlist *next, *current;
+    linkedlist_node *next, *current;
 
     BeginDrawing();
         ClearBackground(RAYWHITE);
         BeginMode3D(camera);
-            for (next = drawing.first; next; next = next->next) {
+            for (next = drawing.head; next; next = next->next) {
                 if (next == selected) {
                     DRAW_MODEL(next, PURPLE)
                 } else {
                     DRAW_MODEL(next, GRAY)    
                 }
             }
-            for (next = selection.first; next; next = next->next) {
+            for (next = selection.head; next; next = next->next) {
                 DRAW_MODEL(next, RED)
             }
-            for (next = groups.first; next; next = next->next) {
-                DrawSphereWires(((group*)next->data)->position, ((group*)next->data)->radius, 24, 24, BLACK);
-                current = ((group*)next->data)->group_selection.first;
+            for (next = groups.head; next; next = next->next) {
+                DrawSphereWires(((group*)next->value)->position, ((group*)next->value)->radius, 24, 24, BLACK);
+                current = ((group*)next->value)->group_selection.head;
                 for (; current; current = current->next) {
                     DRAW_MODEL(current, ORANGE)
                 }
@@ -483,7 +474,7 @@ void draw_scene()
             DrawSphere((Vector3){.0f, .0f, .0f}, 5.0f, BLUE);
             DrawCubeWires((Vector3){0.0f, 0.0f, -ARRIVAL_DIST / 2}, MAX_DIST*2, MAX_DIST*2, ARRIVAL_DIST, RED);
         EndMode3D();
-        DrawText(TextFormat("Total de Modelos: %d", drawing.size + selection.size), 10, 30, 20, BLACK);
+        DrawText(TextFormat("Total de Modelos: %d", drawing.nmemb + selection.nmemb), 10, 30, 20, BLACK);
         DrawText("[Botao Esquerdo] selecionar\n"
              "[Botao Direito] mover\n"
              "[1 - 6] adicionar modelo de asteroide\n"
@@ -508,121 +499,117 @@ void draw_scene()
 void trans_single()
 {
     if (move_flag)
-        ((model*)selected->data)->position = camera.target;
+        ((model*)selected->value)->position = camera.target;
     if (IsKeyDown(KEY_X))
-        ((model*)selected->data)->angles.x += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+        ((model*)selected->value)->angles.x += IsKeyDown(KEY_MINUS)? -.8f : .8f;
     if (IsKeyDown(KEY_Y))
-        ((model*)selected->data)->angles.y += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+        ((model*)selected->value)->angles.y += IsKeyDown(KEY_MINUS)? -.8f : .8f;
     if (IsKeyDown(KEY_Z))
-        ((model*)selected->data)->angles.z += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+        ((model*)selected->value)->angles.z += IsKeyDown(KEY_MINUS)? -.8f : .8f;
     if (IsKeyDown(KEY_LEFT_SHIFT)) {
         if (IsKeyDown(KEY_EQUAL))
-            ((model*)selected->data)->scale += 1.0f;
+            ((model*)selected->value)->scale += 1.0f;
         else if (IsKeyDown(KEY_MINUS))
-            ((model*)selected->data)->scale -= 1.0f;
+            ((model*)selected->value)->scale -= 1.0f;
     } else if (IsKeyDown(KEY_LEFT_CONTROL)) {
         if (IsKeyPressed(KEY_C)) {
-            new_model.model_idx = ((model*)selected->data)->model_idx;
-            new_model.angles = ((model*)selected->data)->angles;
-            new_model.scale = ((model*)selected->data)->scale;
+            new_model.model_idx = ((model*)selected->value)->model_idx;
+            new_model.angles = ((model*)selected->value)->angles;
+            new_model.scale = ((model*)selected->value)->scale;
         } else if (IsKeyPressed(KEY_V)) {
             new_model.position = camera.target;
-            insert_linkedlist(&new_model, &drawing, sizeof(model));
+            linkedlist_appendlloc(&drawing, &new_model, sizeof(model));
         }
     }
     if (IsKeyPressed(KEY_DELETE)) {
-        remove_linkedlist(selected, &drawing);
+        LINKEDLIST_DELETEFREE(&drawing, selected);
         selected = NULL;
     }
 }
 
 #define MOVE_MANY(GROUP, PTR) \
-        for (next = GROUP.first; next; next = next->next) { \
-            ((PTR*)next->data)->position.x += camera.target.x - lastpos.x; \
-            ((PTR*)next->data)->position.y += camera.target.y - lastpos.y; \
-            ((PTR*)next->data)->position.z += camera.target.z - lastpos.z; \
+        for (next = GROUP.head; next; next = next->next) { \
+            ((PTR*)next->value)->position.x += camera.target.x - lastpos.x; \
+            ((PTR*)next->value)->position.y += camera.target.y - lastpos.y; \
+            ((PTR*)next->value)->position.z += camera.target.z - lastpos.z; \
         }
 
 void trans_selection()
 {
-    node_linkedlist *next;
+    linkedlist_node *next;
 
     if (move_flag) {
         MOVE_MANY(selection, model)
         lastpos = camera.target;
     }
     if (IsKeyDown(KEY_X))
-        for (next = selection.first; next; next = next->next)
-            ((model*)next->data)->angles.x += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+        for (next = selection.head; next; next = next->next)
+            ((model*)next->value)->angles.x += IsKeyDown(KEY_MINUS)? -.8f : .8f;
     if (IsKeyDown(KEY_Y))
-        for (next = selection.first; next; next = next->next)
-            ((model*)next->data)->angles.y += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+        for (next = selection.head; next; next = next->next)
+            ((model*)next->value)->angles.y += IsKeyDown(KEY_MINUS)? -.8f : .8f;
     if (IsKeyDown(KEY_Z))
-        for (next = selection.first; next; next = next->next)
-            ((model*)next->data)->angles.z += IsKeyDown(KEY_MINUS)? -.8f : .8f;
+        for (next = selection.head; next; next = next->next)
+            ((model*)next->value)->angles.z += IsKeyDown(KEY_MINUS)? -.8f : .8f;
     if (IsKeyPressed(KEY_R))
-        for (next = selection.first; next; next = next->next) {
-            ((model*)next->data)->angles.x = GetRandomValue(0, 359);
-            ((model*)next->data)->angles.y = GetRandomValue(0, 359);
-            ((model*)next->data)->angles.z = GetRandomValue(0, 359);
+        for (next = selection.head; next; next = next->next) {
+            ((model*)next->value)->angles.x = GetRandomValue(0, 359);
+            ((model*)next->value)->angles.y = GetRandomValue(0, 359);
+            ((model*)next->value)->angles.z = GetRandomValue(0, 359);
         }
     if (IsKeyDown(KEY_LEFT_SHIFT)) {
         if (IsKeyDown(KEY_EQUAL))
-            for (next = selection.first; next; next = next->next)
-                ((model*)next->data)->scale += 1.0f;
+            for (next = selection.head; next; next = next->next)
+                ((model*)next->value)->scale += 1.0f;
         else if (IsKeyDown(KEY_MINUS))
-            for (next = selection.first; next; next = next->next)
-                ((model*)next->data)->scale -= 1.0f;
+            for (next = selection.head; next; next = next->next)
+                ((model*)next->value)->scale -= 1.0f;
     } else if (IsKeyDown(KEY_LEFT_CONTROL)) {
         if (IsKeyPressed(KEY_C)) {
-            for (next = selection.first; next; next = next->next) {
-                new_model.model_idx = ((model*)next->data)->model_idx;
-                new_model.angles = ((model*)next->data)->angles;
-                new_model.scale = ((model*)next->data)->scale;
-                new_model.position = ((model*)next->data)->position;
-                insert_linkedlist(&new_model, &ln, sizeof(model));
+            for (next = selection.head; next; next = next->next) {
+                new_model.model_idx = ((model*)next->value)->model_idx;
+                new_model.angles = ((model*)next->value)->angles;
+                new_model.scale = ((model*)next->value)->scale;
+                new_model.position = ((model*)next->value)->position;
+                linkedlist_appendlloc(&ln, &new_model, sizeof(model));
             }
             lastpos = camera.target;
         } else if (IsKeyPressed(KEY_V)) {
-            for (next = ln.first; next; next = next->next) {
-                ((model*)next->data)->position.x += camera.target.x - lastpos.x;
-                ((model*)next->data)->position.y += camera.target.y - lastpos.y;
-                ((model*)next->data)->position.z += camera.target.z - lastpos.z;
-                insert_linkedlist(next->data, &drawing, sizeof(model));
+            for (next = ln.head; next; next = next->next) {
+                ((model*)next->value)->position.x += camera.target.x - lastpos.x;
+                ((model*)next->value)->position.y += camera.target.y - lastpos.y;
+                ((model*)next->value)->position.z += camera.target.z - lastpos.z;
+                linkedlist_append(&drawing, next->value);
             }
-            while (ln.size)
-                remove_linkedlist(ln.last, &ln);
+            linkedlist_erase(&ln);
         }
     }
     if (IsKeyPressed(KEY_DELETE))
-        while (selection.size)
-            remove_linkedlist(selection.last, &selection);
+        linkedlist_erasefree(&selection);
 }
 
 void get_in_volume(in_list, out_list, group_shape)
-list_linkedlist *in_list, *out_list;
+linkedlist_list *in_list, *out_list;
 group *group_shape;
 {
-    node_linkedlist *next, *next_collision, *current;
+    linkedlist_node *next, *next_collision;
     model *target, *ptrm;
-    list_linkedlist *collisions;
+    linkedlist_list *collisions;
     Vector3 temp;
     float new_scale;
     bool found;
 
-    for (next = in_list->first; next;) {
+    for (next = in_list->head; next;) {
         found = false;
-        target = (model*)next->data;
+        target = (model*)next->value;
         collisions = &models[target->model_idx].collision_list;
-        for (next_collision = collisions->first; next_collision; next_collision = next_collision->next) {
-            ptrm = (model*)next_collision->data;
+        for (next_collision = collisions->head; next_collision; next_collision = next_collision->next) {
+            ptrm = (model*)next_collision->value;
             temp = TRANFORM_SPHERE(target, ptrm->position)
             new_scale = ptrm->scale * target->scale;
             if (CheckCollisionSpheres(temp, new_scale, group_shape->position, group_shape->radius)) {
-                insert_linkedlist(next->data, out_list, sizeof(model));
-                current = next;
-                next = next->next;
-                remove_linkedlist(current, in_list);
+                linkedlist_append(out_list, next->value);
+                next = linkedlist_delete(in_list, next);
                 found = true;
                 break;
             }
@@ -633,77 +620,71 @@ group *group_shape;
 }
 
 #define RELEASE_GROUP_SELECTION(LIST) \
-    while (LIST.first) { \
-        insert_linkedlist(LIST.first->data, &drawing, sizeof(model)); \
-        remove_linkedlist(LIST.first, &LIST); \
-    }
+    linkedlist_move_all_last_first(&drawing, LIST)
 
 #define ROTATE_GROUP(AXIS, DEGREE) \
-    for (next = groups.first; next; next = next->next) { \
-        current = ((group*)next->data)->group_selection.first; \
+    for (next = groups.head; next; next = next->next) { \
+        current = ((group*)next->value)->group_selection.head; \
         for (; current; current = current->next) { \
             direction = Vector3RotateByAxisAngle( \
-                Vector3Subtract(((model*)current->data)->position, \
-                        ((group*)next->data)->position), \
+                Vector3Subtract(((model*)current->value)->position, \
+                        ((group*)next->value)->position), \
                 AXIS, \
                 DEGREE); \
-            ((model*)current->data)->position = Vector3Add(direction, ((group*)next->data)->position); \
+            ((model*)current->value)->position = Vector3Add(direction, ((group*)next->value)->position); \
         } \
     }
 
 void trans_group()
 {
-    node_linkedlist *next, *current;
-    list_linkedlist *l;
+    linkedlist_node *next, *current;
+    linkedlist_list *l;
     Vector3 direction;
 
     if (IsKeyPressed(KEY_B))
-        for (next = groups.first; next; next = next->next)
-            get_in_volume(&drawing, &(((group*)next->data)->group_selection), next->data);
+        for (next = groups.head; next; next = next->next)
+            get_in_volume(&drawing, &(((group*)next->value)->group_selection), next->value);
     if (IsKeyPressed(KEY_V))
-        for (next = groups.first; next; next = next->next) {
-            l = &((group*)next->data)->group_selection;
-            while (l->first) {
-                insert_linkedlist(l->first->data, &selection, sizeof(model));
-                remove_linkedlist(l->first, l);
-            }
+        for (next = groups.head; next; next = next->next) {
+            l = &((group*)next->value)->group_selection;
+            linkedlist_move_all_last_first(&selection, l);
         }
     if (IsKeyPressed(KEY_R))
-        for (next = groups.first; next; next = next->next)
-            RELEASE_GROUP_SELECTION(((group*)next->data)->group_selection)
+        for (next = groups.head; next; next = next->next)
+            RELEASE_GROUP_SELECTION(&((group*)next->value)->group_selection);
     if (IsKeyPressed(KEY_F))
-        while (groups.first) {
-            RELEASE_GROUP_SELECTION(((group*)groups.first->data)->group_selection)
-            remove_linkedlist(groups.first, &groups);
+        while (groups.head) {
+            RELEASE_GROUP_SELECTION(&((group*)groups.head->value)->group_selection);
+            LINKEDLIST_DELETEFREE(&groups, groups.head);
         }
     if (move_flag) {
         MOVE_MANY(groups, group)
-        for (current = groups.first; current; current = current->next)
-            MOVE_MANY(((group*)current->data)->group_selection, model)
+        for (current = groups.head; current; current = current->next)
+            MOVE_MANY(((group*)current->value)->group_selection, model)
         lastpos = camera.target;
     }
     if (IsKeyDown(KEY_LEFT_SHIFT)) {
         if (IsKeyDown(KEY_EQUAL)) {
-            for (next = groups.first; next; next = next->next) {
-                ((group*)next->data)->radius += 1.0f;
-                current = ((group*)next->data)->group_selection.first;
+            for (next = groups.head; next; next = next->next) {
+                ((group*)next->value)->radius += 1.0f;
+                current = ((group*)next->value)->group_selection.head;
                 for (; current; current = current->next) {
-                    direction = Vector3Normalize(Vector3Subtract(((model*)current->data)->position, ((group*)next->data)->position));
-                    ((model*)current->data)->position.x += direction.x;
-                    ((model*)current->data)->position.y += direction.y;
-                    ((model*)current->data)->position.z += direction.z;
+                    direction = Vector3Normalize(Vector3Subtract(((model*)current->value)->position, ((group*)next->value)->position));
+                    ((model*)current->value)->position.x += direction.x;
+                    ((model*)current->value)->position.y += direction.y;
+                    ((model*)current->value)->position.z += direction.z;
                 }
             }
         } else if (IsKeyDown(KEY_MINUS))
-            for (next = groups.first; next; next = next->next) {
-                ((group*)next->data)->radius -= 1.0f;
-                current = ((group*)next->data)->group_selection.first;
+            for (next = groups.head; next; next = next->next) {
+                ((group*)next->value)->radius -= 1.0f;
+                current = ((group*)next->value)->group_selection.head;
                 for (; current; current = current->next) {
-                    direction = Vector3Normalize(Vector3Subtract(((group*)next->data)->position,
-                                                     ((model*)current->data)->position));
-                    ((model*)current->data)->position.x += direction.x;
-                    ((model*)current->data)->position.y += direction.y;
-                    ((model*)current->data)->position.z += direction.z;
+                    direction = Vector3Normalize(Vector3Subtract(((group*)next->value)->position,
+                                                     ((model*)current->value)->position));
+                    ((model*)current->value)->position.x += direction.x;
+                    ((model*)current->value)->position.y += direction.y;
+                    ((model*)current->value)->position.z += direction.z;
                 }
             }
     }

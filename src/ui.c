@@ -16,10 +16,13 @@
     with this program; If not, see <http://www.gnu.org/licenses/>
 */
 
-#include <raylib.h>
 #include <time.h>
-#include "linked_list.c"
+
+#include <raylib.h>
+
 #include "../lib/arrays/array.c"
+#include "../lib/linkedlist/linkedlist.h"
+
 #include "defs.h"
 #include "translate.c"
 #define RAYGUI_IMPLEMENTATION

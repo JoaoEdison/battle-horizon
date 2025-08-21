@@ -1,5 +1,5 @@
 /*
-    OCRC, a AI for optical character recognition written in C
+    Battle Horizon is a 3D space battle game in Raylib.
     Copyright (C) 2023-2025 João E. R. Manica
     
     OCRC is free software: you can redistribute it and/or modify

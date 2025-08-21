@@ -19,7 +19,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include "defs.h"
-#include "linked_list.c"
+#include "../lib/linkedlist/linkedlist.h"
 
 #define MAX_MAP_NAME_LEN 60
 
@@ -34,7 +34,7 @@ typedef struct {
     char pathname[MAX_MAP_NAME_LEN];
     char texturepath[MAX_MAP_NAME_LEN];
     int has_texture;
-    list_linkedlist collision_list;
+    linkedlist_list collision_list;
 } models_with_collisions;
 
 #define TRANFORM_SPHERE(current_model, pos_model) \
@@ -52,14 +52,14 @@ typedef struct {
 
 void draw_collisions_wires(current_model, collisions)
 model *current_model;
-list_linkedlist *collisions;
+linkedlist_list *collisions;
 {
-    node_linkedlist *next;
+    linkedlist_node *next;
     model *ptrm;
     Vector3 temp;
 
-    for (next = collisions->first; next; next = next->next) {
-        ptrm = (model*)next->data;
+    for (next = collisions->head; next; next = next->next) {
+        ptrm = (model*)next->value;
         temp = TRANFORM_SPHERE(current_model, ptrm->position)
         DrawSphereWires(temp, ptrm->scale * current_model->scale, 5, 5, GREEN);
     }
